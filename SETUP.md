@@ -54,8 +54,9 @@ The following commands are the basic workflow for contributing to the project:
 
 #### Note:
 Both VScode and Eclipse have plugins to make it easy to use Git without memorizing git commands.
--Gitub PullRequests and Issues (VScode)
--Egit (Eclipse)
+
+- Github Pull Requests and Issues (VScode)
+- Egit (Eclipse)
 
  Equally, the [GitHub Desktop app](https://desktop.github.com/) makes using git very simple, but it is not linkable to Eclipse.
 
