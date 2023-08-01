@@ -1,4 +1,4 @@
-package com.example;
+package c6591;
 import java.sql.*;
 
 public class App {

@@ -1,4 +1,4 @@
-package com.example;
+package c6591;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
