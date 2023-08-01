@@ -55,9 +55,9 @@ public class Token {
 	}
 
     // Parse the input file and print out the tokens.
-    public static void parse(String filePath) {
+    public static ArrayList<ArrayList<String>> parse(String filePath) {
         
-		ArrayList<ArrayList<String>> result = new ArrayList<>();
+		ArrayList<ArrayList<String>> facts = new ArrayList<>();
        
 		
 		try(FileReader filereader = new FileReader(filePath);
@@ -67,32 +67,34 @@ public class Token {
 			
 			String newline;
 			while((newline = bufferedreader.readLine()) != null) {
-				//System.out.println(result);
-				ArrayList<String> placeholder = new ArrayList<>();
-				//System.out.println(newline);
-			    Matcher matcher = pattern.matcher(newline);
-			    
-			    while(matcher.find()) {	
-			     String header = matcher.group(); 
-		         //String[] elements = content.split(","); 
-		         //System.out.println(content);
-			     //System.out.println(header);
-		         //ArrayList<String> temp = new ArrayList<>();
-			     //System.out.println(header);
-			     placeholder.add(header);
-			     }
-			    
-			    //System.out.println(placeholder);
-			    result.add(placeholder);
-			    //System.out.println(result);
-			    //pos +=1;
+				if(!newline.contains(":-")){
+					//System.out.println(result);
+					ArrayList<String> placeholder = new ArrayList<>();
+					//System.out.println(newline);
+					Matcher matcher = pattern.matcher(newline);
+					
+					while(matcher.find()) {	
+					String header = matcher.group(); 
+					//String[] elements = content.split(","); 
+					//System.out.println(content);
+					//System.out.println(header);
+					//ArrayList<String> temp = new ArrayList<>();
+					//System.out.println(header);
+					placeholder.add(header);
+					}
+					
+					//System.out.println(placeholder);
+					facts.add(placeholder);
+					//System.out.println(result);
+					//pos +=1;
+				}
 			}
 			
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println(result);
-
+		System.out.println(facts);
+		return facts;
         
     }
 
