@@ -1,0 +1,4 @@
+parent(john, alice).
+likes(alice, chocolate).
+sibling(john, bob, mary).
+sibling(X,Y):-parent(x),parent(y).
