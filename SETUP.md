@@ -18,7 +18,11 @@ If JDK 17 is not installed:
 ### Windows
 - Download the installer from the [official Oracle website](https://www.oracle.com/java/technologies/javase-jdk17-downloads.html).
 - Run the installer and follow the prompts.
-- Set the PATH environment variable: Search for 'Environment Variables' in your computer's Control Panel. Under 'System Variables', click on 'Path', then 'Edit', and then 'New'. Add the path of the bin directory of your JDK installation.
+- Set the PATH environment variable: Search for 'Advanced System setting' in the windows search bar, click on 'Environment Variables'. Under 'System Variables', click on 'Path', then 'Edit', and then 'New'. Add the path of the bin directory of your JDK installation (e.g. C:\Program Files\Java\jdk-17\bin).
+- If this isn't working you can equally try the short name for program files 
+    - For "C:\Program Files", use "C:\PROGRA~1"
+    - For "C:\Program Files (x86)", use "C:\PROGRA~2
+- The 'JAVA_PATH' variable also need to be set in 'System Variables'. Create or update the variable to the main jdk directory (e.g. C:\PROGRA~1\Java\jdk-17)
 
 ### Mac OS/Linux
 - Download the tar.gz file from the [official Oracle website](https://www.oracle.com/java/technologies/javase-jdk17-downloads.html).
@@ -30,7 +34,7 @@ If JDK 17 is not installed:
 We're using Maven 3.9.3 for this project.
 - Download it from the [official Apache website](https://maven.apache.org/download.cgi).
 - Extract it to your desired location.
-- Add the bin directory of the extracted Maven to the PATH environment variable.
+- Add the bin directory of the extracted Maven to the 'Path' system environment variable (e.g C:\PROGRA~1\apache-maven-3.9.3\bin).
 
 ## GitHub
 
@@ -55,7 +59,7 @@ The following commands are the basic workflow for contributing to the project:
 #### Note:
 Both VScode and Eclipse have plugins to make it easy to use Git without memorizing git commands.
 
-- Github Pull Requests and Issues (VScode), but the default source control tab has everything I really need.
+- Github Pull Requests and Issues (VScode), but the default **source control** tab has everything I really need.
 - Egit (Eclipse)
 
  Equally, the [GitHub Desktop app](https://desktop.github.com/) makes using git very simple, but it is not linkable to Eclipse.
