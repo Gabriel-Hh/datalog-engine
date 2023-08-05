@@ -1,12 +1,43 @@
 PARSER_BEGIN(DatalogParser)
 
+package c6591;
+
+import c6591.ASTClasses.*;
+import java.util.ArrayList;
+
 public class DatalogParser {
 
     // additional fields and methods can be added here
 
+    // This method replaces the nested for loop from the Rule production
+    void setVariableSource(Head head, Body body) {
+        for (Variable variable : head.predicate.variables) {
+            for (Predicate predicate : body.predicates) {
+                boolean variableMatched = false;
+                for (Variable v : predicate.variables) {
+                    if (v.name.equals(variable.name)) {
+                        variableMatched = true;
+                        break;
+                    }
+                }
+                if (variableMatched) {
+                    variable.source = predicate.alias;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 PARSER_END(DatalogParser)
+
+// Tokens
+TOKEN :
+{
+    <PRED_NAME: ["a"-"z"](["a"-"z","A"-"Z","0"-"9"])*> |
+    <VAR_NAME: ["A"-"Z"](["a"-"z","A"-"Z","0"-"9"])*> |
+    <CONST_NAME: ["a"-"z"](["a"-"z","A"-"Z","0"-"9"])*>
+}
 
 Program Program() :
 {
@@ -42,20 +73,11 @@ Rule Rule() :
     Rule rule = new Rule();
 }
 {
-    head = Head() ":" body = Body(rule) 
+    head = Head() ":" body = Body(rule)
     {
-        rule.head = head; 
-        rule.body = body; 
-        // Set the source for each variable in the head to the alias of 
-        // the first predicate in the body that contains a variable with the same name
-        for (Variable variable : head.predicate.variables) {
-            for (Predicate predicate : body.predicates) {
-                if (predicate.variables.stream().anyMatch(v -> v.name.equals(variable.name))) {
-                    variable.source = predicate.alias;
-                    break;
-                }
-            }
-        }
+        rule.head = head;
+        rule.body = body;
+        setVariableSource(head, body); // Call the method here
     }
     { return rule; }
 }
@@ -143,7 +165,4 @@ Constant Constant() :
     { return new Constant(value); }
 }
 
-// Tokens
-TOKEN { <PRED_NAME: (["a"-"z"]["a"-"z","A"-"Z","0"-"9"]*)> }
-TOKEN { <VAR_NAME: ["A"-"Z"]["a"-"z","A"-"Z","0"-"9"]*> }
-TOKEN { <CONST_NAME: ["a"-"z"]["a"-"z","A"-"Z","0"-"9"]*> }
+

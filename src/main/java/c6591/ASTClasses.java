@@ -5,54 +5,55 @@ import java.util.List;
 import java.util.Map;
 
 public class ASTClasses {
-    class Program {
-    List<Rule> rules;
-    List<Fact> facts;
+    
+    public static class Program {
+    public List<Rule> rules;
+    public List<Fact> facts;
 }
 
-abstract class Statement { }
+    public abstract static class Statement { }
 
-class Rule extends Statement {
-    Head head;
-    Body body;
-    Map<String, Integer> bodyPredicateCounts = new HashMap<>();
-}
+    public static class Rule extends Statement {
+        public Head head;
+        public Body body;
+        public Map<String, Integer> bodyPredicateCounts = new HashMap<>();
+    }
 
-class Fact extends Statement {
-    Predicate predicate;
-}
+    public static class Fact extends Statement {
+        public Predicate predicate;
+    }
 
-class Head {
-    Predicate predicate;
-}
+    public static class Head {
+        public Predicate predicate;
+    }
 
-class Body {
-    List<Predicate> predicates;
-    List<JoinCondition> joinConditions;
-}
+    public static class Body {
+        public List<Predicate> predicates;
+        public List<JoinCondition> joinConditions;
+    }
 
-class JoinCondition {
-    String variableName;
-    int variableIndex;
-    List<Predicate> predicates;
-}
+    public static class JoinCondition {
+        public String variableName;
+        public int variableIndex;
+        public List<Predicate> predicates;
+    }
 
-class Predicate {
-    String name;
-    List<Term> terms;
-    String alias;
-}
+    public static class Predicate {
+        public String name;
+        public List<Term> terms;
+        public String alias;
+    }
 
-abstract class Term { }
+    public static abstract class Term { }
 
-class Variable extends Term {
-    String name;
-    String source;
-    int index;
-}
+    public static class Variable extends Term {
+        public String name;
+        public String source;
+        public int index;
+    }
 
-class Constant extends Term {
-    String value;
-}
+    public static class Constant extends Term {
+        public String value;
+    }
 
 }
