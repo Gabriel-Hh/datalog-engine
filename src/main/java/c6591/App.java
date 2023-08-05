@@ -25,7 +25,7 @@ public class App {
 
         
         System.out.println("Running Token.parse:");
-        facts = Token.parse(filePath);
+        facts = Token_Raquib.parse(filePath);
 
         System.out.println("Running H2test:");
         H2test.test();
