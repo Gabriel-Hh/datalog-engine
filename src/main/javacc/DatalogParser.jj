@@ -1,0 +1,149 @@
+PARSER_BEGIN(DatalogParser)
+
+public class DatalogParser {
+
+    // additional fields and methods can be added here
+
+}
+
+PARSER_END(DatalogParser)
+
+Program Program() :
+{
+    List<Rule> rules = new ArrayList<>();
+    List<Fact> facts = new ArrayList<>();
+    Statement statement;
+}
+{
+    ( statement = Statement()
+        {
+            if (statement instanceof Rule) rules.add((Rule) statement);
+            else if (statement instanceof Fact) facts.add((Fact) statement);
+        }
+    )*
+    { return new Program(rules, facts); }
+}
+
+Statement Statement() :
+{
+    Rule rule;
+    Fact fact;
+}
+{
+    rule = Rule() { return rule; }
+    |
+    fact = Fact() { return fact; }
+}
+
+Rule Rule() :
+{
+    Head head;
+    Body body;
+    Rule rule = new Rule();
+}
+{
+    head = Head() ":" body = Body(rule) 
+    {
+        rule.head = head; 
+        rule.body = body; 
+        // Set the source for each variable in the head to the alias of 
+        // the first predicate in the body that contains a variable with the same name
+        for (Variable variable : head.predicate.variables) {
+            for (Predicate predicate : body.predicates) {
+                if (predicate.variables.stream().anyMatch(v -> v.name.equals(variable.name))) {
+                    variable.source = predicate.alias;
+                    break;
+                }
+            }
+        }
+    }
+    { return rule; }
+}
+
+Fact Fact() :
+{
+    Predicate predicate;
+}
+{
+    predicate = Predicate(null) // No rule for a fact
+    { return new Fact(predicate); }
+}
+
+Head Head() :
+{
+    Predicate predicate;
+}
+{
+    predicate = Predicate(null) // No rule for a head
+    { return new Head(predicate); }
+}
+
+Body Body(Rule rule) :
+{
+    List<Predicate> predicates = new ArrayList<>();
+    Predicate predicate;
+}
+{
+    (
+        predicate = Predicate(rule)
+        { predicates.add(predicate); }
+    )*
+    { return new Body(predicates); }
+}
+
+Predicate Predicate(Rule rule) :
+{
+    String name;
+    List<Term> terms = new ArrayList<>();
+    Term term;
+    String alias = null;
+}
+{
+    name = <PRED_NAME>
+    {
+        int count = rule != null ? rule.bodyPredicateCounts.getOrDefault(name, 0) + 1 : 1;
+        if (rule != null) rule.bodyPredicateCounts.put(name, count);
+        alias = name + count;
+    }
+    "(" 
+        term = Term() { term.source = alias; term.index = terms.size(); terms.add(term); }
+    (
+        "," term = Term() { term.source = alias; term.index = terms.size(); terms.add(term); }
+    )*
+    ")"
+    { return new Predicate(name, terms, alias); }
+}
+
+Term Term() :
+{
+    Variable variable;
+    Constant constant;
+}
+{
+    variable = Variable() { return variable; }
+    |
+    constant = Constant() { return constant; }
+}
+
+Variable Variable() :
+{
+    String name;
+}
+{
+    name = <VAR_NAME>
+    { return new Variable(name, null, 0); } // Source and index to be set later
+}
+
+Constant Constant() :
+{
+    String value;
+}
+{
+    value = <CONST_NAME>
+    { return new Constant(value); }
+}
+
+// Tokens
+TOKEN { <PRED_NAME: (["a"-"z"]["a"-"z","A"-"Z","0"-"9"]*)> }
+TOKEN { <VAR_NAME: ["A"-"Z"]["a"-"z","A"-"Z","0"-"9"]*> }
+TOKEN { <CONST_NAME: ["a"-"z"]["a"-"z","A"-"Z","0"-"9"]*> }
