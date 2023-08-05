@@ -1,8 +1,9 @@
 PARSER_BEGIN(DatalogParser)
 
-package c6591;
+package parser;
 
 import c6591.ASTClasses.*;
+import java.util.List;
 import java.util.ArrayList;
 
 public class DatalogParser {
@@ -10,18 +11,23 @@ public class DatalogParser {
     // additional fields and methods can be added here
 
     // This method replaces the nested for loop from the Rule production
-    void setVariableSource(Head head, Body body) {
-        for (Variable variable : head.predicate.variables) {
-            for (Predicate predicate : body.predicates) {
+    static void setVariableSource(Head head, Body body) {
+        List<Term> terms = head.predicate.terms;
+        for (int i = 0; i < terms.size(); i++) {
+            Variable variable = (Variable)term.get(i);
+            for (int j= 0; j < body.predicates.size(); j++) {
+                Predicate predicate = body.predicates.get(j);
                 boolean variableMatched = false;
-                for (Variable v : predicate.variables) {
-                    if (v.name.equals(variable.name)) {
+                for (int k = 0; k < body.predicates.terms.size(); k++) {
+                    Variable other = (Variable)body.predicates.terms.get(k);
+                    if (other.name.equals(variable.name)) {
                         variableMatched = true;
+                        variable.source = predicate.alias;
+                        variable.index = other.index;
                         break;
                     }
                 }
                 if (variableMatched) {
-                    variable.source = predicate.alias;
                     break;
                 }
             }

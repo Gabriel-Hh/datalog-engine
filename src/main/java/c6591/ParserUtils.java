@@ -45,7 +45,7 @@ List<JoinCondition> identifyJoinConditions(List<Predicate> predicates) {
     List<JoinCondition> joinConditions = new ArrayList<>();
     for (Map.Entry<String, List<Predicate>> entry : variableToPredicates.entrySet()) {
         if (entry.getValue().size() > 1) {
-            JoinCondition joinCondition = new ASTClasses().new JoinCondition();
+            JoinCondition joinCondition = new JoinCondition();
             joinCondition.variableName = entry.getKey();
             joinCondition.predicates = entry.getValue();
             joinConditions.add(joinCondition);

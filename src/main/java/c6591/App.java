@@ -2,12 +2,12 @@ package c6591;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.text.ParseException;
 import java.util.ArrayList;
 
 import c6591.ASTClasses.Program;
-import c6591.SQLGenerator.*;
-import c6591.DatalogParser.*;
+import c6591.SQLGenerator;
+import parser.DatalogParser;
+import parser.ParseException;
 
 public class App {
     public static void main(String[] args) {
@@ -38,7 +38,7 @@ public class App {
 
 
         System.out.println("Running the javaCC parser:");
-        Program program;
+        Program program = new Program();
         try {
             // Create a FileInputStream for the file to be parsed
             FileInputStream fis = new FileInputStream(filePath);
@@ -50,10 +50,7 @@ public class App {
             program = parser.Program();
             System.out.println("Program parsed successfully.");
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            // Handle parse exceptions here
+        } catch (FileNotFoundException | ParseException e) {
             e.printStackTrace();
         }
 
