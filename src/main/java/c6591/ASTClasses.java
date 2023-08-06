@@ -13,11 +13,10 @@ public class ASTClasses {
     public Program() {
     }   
 
-    public Program(List<Rule> rules, List<Fact> facts) {
-        this.rules = rules;
-        this.facts = facts;
-    }
-    
+        public Program(List<Rule> rules, List<Fact> facts) {
+            this.rules = rules;
+            this.facts = facts;
+        }
     }
 
     public abstract static class Statement { }
@@ -61,14 +60,11 @@ public class ASTClasses {
 
     public static class JoinCondition {
         public String variableName;
-        //TODO move index to each predicate.
-        public int variableIndex;
-        public List<Predicate> predicates;
+        public List<Tuple<Predicate,Integer>> tupleList;
 
-        public JoinCondition(String variableName, int variableIndex, List<Predicate> predicates) {
+        public JoinCondition(String variableName, List<Tuple<Predicate,Integer>> tupleList) {
             this.variableName = variableName;
-            this.variableIndex = variableIndex;
-            this.predicates = predicates;
+            this.tupleList = tupleList;
         }
     }
 
@@ -84,7 +80,11 @@ public class ASTClasses {
         }
     }
 
-    public static abstract class Term { }
+    public static abstract class Term {
+        public String name;
+        public String source;
+        public int index;
+    }
 
     public static class Variable extends Term {
         public String name;
@@ -109,5 +109,16 @@ public class ASTClasses {
             this.index = index;
         }
     }
+
+    //Cause Java doesn't have tuples
+    public static class Tuple<A, B> {
+        public A first;
+        public B second;
+
+        public Tuple(A first, B second) {
+            this.first = first;
+            this.second = second;
+        }
+    } 
 
 }

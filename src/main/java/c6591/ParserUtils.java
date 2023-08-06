@@ -11,48 +11,46 @@ import c6591.ASTClasses.*;
 
 
 public class ParserUtils {
+    
     boolean checkSafety(Rule rule) {
-    Set<String> bodyVariables = new HashSet<>();
-    for (Predicate predicate : rule.body.predicates) {
-        for (Term term : predicate.terms) {
-            if (term instanceof Variable) {
-                bodyVariables.add(((Variable) term).name);
+        Set<String> bodyVariables = new HashSet<>();
+        for (Predicate predicate : rule.body.predicates) {
+            for (Term term : predicate.terms) {
+                if (term instanceof Variable) {
+                    bodyVariables.add(((Variable) term).name);
+                }
             }
         }
-    }
-    for (Term term : rule.head.predicate.terms) {
-        if (term instanceof Variable && !bodyVariables.contains(((Variable) term).name)) {
-            return false; // Variable in head not found in body
+        for (Term term : rule.head.predicate.terms) {
+            if (term instanceof Variable && !bodyVariables.contains(((Variable) term).name)) {
+                return false; // Variable in head not found in body
+            }
         }
-    }
     return true;
-}
+    }
 
-List<JoinCondition> identifyJoinConditions(List<Predicate> predicates) {
-    Map<String, List<Predicate>> variableToPredicates = new HashMap<>();
+    List<JoinCondition> identifyJoinConditions(List<Predicate> predicates) {
+        Map<String, List<Tuple<Predicate,Integer>>> variableToPredicates = new HashMap<>();
 
-    for (Predicate predicate : predicates) {
-        for (int i = 0; i < predicate.terms.size(); i++) {
-            Term term = predicate.terms.get(i);
-            if (term instanceof Variable) {
-                variableToPredicates
-                    .computeIfAbsent(((Variable) term).name, k -> new ArrayList<>())
-                    .add(predicate);
+        for (int i = 0; i < predicates.size(); i++) {
+            Predicate predicate = predicates.get(i);
+            for (int j = 0; j < predicate.terms.size(); j++) {
+                Term term = predicate.terms.get(j);
+                    variableToPredicates
+                        .computeIfAbsent( term.name, k -> new ArrayList<>())
+                        .add(new Tuple<Predicate,Integer>(predicate, j+1)); // +1 because SQL is 1-indexed
+                }
+        }
+
+        List<JoinCondition> joinConditions = new ArrayList<>();
+        for ( String variableName : variableToPredicates.keySet()) {
+            if (variableToPredicates.get(variableName).size() > 1) {
+                
+                joinConditions.add(new JoinCondition(variableName, variableToPredicates.get(variableName)));
             }
         }
-    }
 
-    List<JoinCondition> joinConditions = new ArrayList<>();
-    for (Map.Entry<String, List<Predicate>> entry : variableToPredicates.entrySet()) {
-        if (entry.getValue().size() > 1) {
-            JoinCondition joinCondition = new JoinCondition();
-            joinCondition.variableName = entry.getKey();
-            joinCondition.predicates = entry.getValue();
-            joinConditions.add(joinCondition);
-        }
+        return joinConditions;
     }
-
-    return joinConditions;
-}
 
 }
