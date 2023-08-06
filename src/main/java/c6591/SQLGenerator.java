@@ -79,10 +79,9 @@ public class SQLGenerator {
             .collect(Collectors.joining(", "));
 
         String where = rule.body.joinConditions.stream()
-            .map(jc -> jc.predicates.stream()
-                .map(p -> p.alias + "." + "a" + (jc.variableIndex + 1))
-                .collect(Collectors.joining(" = ")))
-            .collect(Collectors.joining(" AND "));
+        .flatMap(jc -> jc.tupleList.stream()
+            .map(tuple -> tuple.first.alias + "." + "a" + (tuple.second + 1)))
+        .collect(Collectors.joining(" = ", "", " AND "));
 
         return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + " WHERE " + where + ";";
     }

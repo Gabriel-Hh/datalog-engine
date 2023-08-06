@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import c6591.ASTClasses.Program;
-import c6591.SQLGenerator;
+//import c6591.SQLGenerator;
 import parser.DatalogParser;
 import parser.ParseException;
 
