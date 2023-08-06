@@ -1,3 +1,10 @@
+options{
+    STATIC = false;
+    LOOKAHEAD = 2;
+    DEBUG_PARSER = true;
+    ERROR_REPORTING = true;
+}
+
 PARSER_BEGIN(DatalogParser)
 
 package parser;
@@ -37,12 +44,17 @@ public class DatalogParser {
 
 PARSER_END(DatalogParser)
 
+SKIP:
+{
+    <WHITESPACE: (" " | "\t" | "\n" | "\r")+ >
+}
+
 // Tokens
 TOKEN :
 {
-    <PRED_NAME: ["a"-"z"](["a"-"z","A"-"Z","0"-"9"])*> |
-    <VAR_NAME: ["A"-"Z"](["a"-"z","A"-"Z","0"-"9"])*> |
-    <CONST_NAME: ["a"-"z"](["a"-"z","A"-"Z","0"-"9"])*>
+    <VAR_NAME: ["A"-"Z"](["a"-"z","A"-"Z","0"-"9","_"])*> |
+    <PRED_CONST_NAME: ["a"-"z"](["a"-"z","A"-"Z","0"-"9","_"])*> |
+    <PERIOD: ".">
 }
 
 Program Program() :
@@ -80,12 +92,13 @@ Rule Rule() :
     Rule rule = new Rule();
 }
 {
-    head = Head() ":" body = Body(rule)
+    head = Head() ":-" body = Body(rule)
     {
         rule.head = head;
         rule.body = body;
         setVariableSource(head, body); // Call the method here
     }
+    <PERIOD>
     { return rule; }
 }
 
@@ -95,6 +108,7 @@ Fact Fact() :
 }
 {
     predicate = Predicate(null) // No rule for a fact
+    <PERIOD>
     { return new Fact(predicate); }
 }
 
@@ -128,7 +142,7 @@ Predicate Predicate(Rule rule) :
     String alias = null;
 }
 {
-    name = <PRED_NAME>.image
+    name = <PRED_CONST_NAME>.image
     {
         int count = rule != null ? rule.bodyPredicateCounts.getOrDefault(name, 0) + 1 : 1;
         if (rule != null) rule.bodyPredicateCounts.put(name, count);
@@ -168,7 +182,7 @@ Constant Constant() :
     String value;
 }
 {
-    value = <CONST_NAME>.image
+    value = <PRED_CONST_NAME>.image
     { return new Constant(value); }
 }
 
