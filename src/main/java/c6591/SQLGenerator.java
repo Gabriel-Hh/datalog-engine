@@ -80,7 +80,7 @@ public class SQLGenerator {
 
         String where = rule.body.joinConditions.stream()
         .flatMap(jc -> jc.tupleList.stream()
-            .map(tuple -> tuple.first.alias + "." + "a" + (tuple.second + 1)))
+            .map(tuple -> tuple.first.alias + "." + "a" + (tuple.second)))
         .collect(Collectors.joining(" = ", "", " AND "));
 
         return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + " WHERE " + where + ";";

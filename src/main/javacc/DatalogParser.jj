@@ -14,12 +14,12 @@ public class DatalogParser {
     static void setVariableSource(Head head, Body body) {
         List<Term> terms = head.predicate.terms;
         for (int i = 0; i < terms.size(); i++) {
-            Variable variable = (Variable)term.get(i);
+            Variable variable = (Variable)terms.get(i);
             for (int j= 0; j < body.predicates.size(); j++) {
                 Predicate predicate = body.predicates.get(j);
                 boolean variableMatched = false;
-                for (int k = 0; k < body.predicates.terms.size(); k++) {
-                    Variable other = (Variable)body.predicates.terms.get(k);
+                for (int k = 0; k < predicate.terms.size(); k++) {
+                    Variable other = (Variable)predicate.terms.get(k);
                     if (other.name.equals(variable.name)) {
                         variableMatched = true;
                         variable.source = predicate.alias;
@@ -67,10 +67,11 @@ Statement Statement() :
     Fact fact;
 }
 {
-    rule = Rule() { return rule; }
+    LOOKAHEAD( Rule() ) rule = Rule() { return rule; }
     |
     fact = Fact() { return fact; }
 }
+
 
 Rule Rule() :
 {
@@ -127,7 +128,7 @@ Predicate Predicate(Rule rule) :
     String alias = null;
 }
 {
-    name = <PRED_NAME>
+    name = <PRED_NAME>.image
     {
         int count = rule != null ? rule.bodyPredicateCounts.getOrDefault(name, 0) + 1 : 1;
         if (rule != null) rule.bodyPredicateCounts.put(name, count);
@@ -158,7 +159,7 @@ Variable Variable() :
     String name;
 }
 {
-    name = <VAR_NAME>
+    name = <VAR_NAME>.image
     { return new Variable(name, null, 0); } // Source and index to be set later
 }
 
@@ -167,7 +168,7 @@ Constant Constant() :
     String value;
 }
 {
-    value = <CONST_NAME>
+    value = <CONST_NAME>.image
     { return new Constant(value); }
 }
 

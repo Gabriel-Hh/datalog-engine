@@ -26,6 +26,9 @@ public class ASTClasses {
         public Body body;
         public Map<String, Integer> bodyPredicateCounts = new HashMap<>();
 
+        public Rule() {
+        }
+
         public Rule(Head head, Body body) {
             this.head = head;
             this.body = body;
@@ -51,6 +54,11 @@ public class ASTClasses {
     public static class Body {
         public List<Predicate> predicates;
         public List<JoinCondition> joinConditions;
+
+        public Body(List<Predicate> predicates){
+            this.predicates = predicates;
+        } // For facts (no join conditions
+        
 
         public Body(List<Predicate> predicates, List<JoinCondition> joinConditions) {
             this.predicates = predicates;
@@ -102,6 +110,10 @@ public class ASTClasses {
         public String value;
         public String source;
         public int index;
+
+        public Constant(String value) {
+            this.value = value;
+        }
 
         public Constant(String value, String source, int index) {
             this.value = value;
