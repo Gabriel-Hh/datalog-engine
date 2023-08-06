@@ -1,4 +1,5 @@
 options{
+
     STATIC = false;
     LOOKAHEAD = 2;
     DEBUG_PARSER = true;
@@ -54,7 +55,8 @@ TOKEN :
 {
     <VAR_NAME: ["A"-"Z"](["a"-"z","A"-"Z","0"-"9","_"])*> |
     <PRED_CONST_NAME: ["a"-"z"](["a"-"z","A"-"Z","0"-"9","_"])*> |
-    <PERIOD: ".">
+    <PERIOD: "."> |
+    <COMMA: ",">
 }
 
 Program Program() :
@@ -79,7 +81,7 @@ Statement Statement() :
     Fact fact;
 }
 {
-    LOOKAHEAD( Rule() ) rule = Rule() { return rule; }
+    LOOKAHEAD(Predicate() ":-" ) rule = Rule() { return rule; }
     |
     fact = Fact() { return fact; }
 }
@@ -96,7 +98,11 @@ Rule Rule() :
     {
         rule.head = head;
         rule.body = body;
-        setVariableSource(head, body); // Call the method here
+        
+        // The 'source' of a head variable is used in SQL SELECT as (predicate.alias).ai 
+        //  Where 'alias' is the distinct table name in which the variable first appears
+        // in the body of the rule (e.g table AS table1) and ai is the columnName (a + index) in the SQL table.
+        setVariableSource(head, body); 
     }
     <PERIOD>
     { return rule; }
@@ -127,10 +133,14 @@ Body Body(Rule rule) :
     Predicate predicate;
 }
 {
-    (
         predicate = Predicate(rule)
         { predicates.add(predicate); }
+    
+    (
+        <COMMA> predicate = Predicate(rule)
+        { predicates.add(predicate); }
     )*
+
     { return new Body(predicates); }
 }
 
@@ -151,7 +161,7 @@ Predicate Predicate(Rule rule) :
     "(" 
         term = Term() { term.source = alias; term.index = terms.size(); terms.add(term); }
     (
-        "," term = Term() { term.source = alias; term.index = terms.size(); terms.add(term); }
+        <COMMA> term = Term() { term.source = alias; term.index = terms.size(); terms.add(term); }
     )*
     ")"
     { return new Predicate(name, terms, alias); }
