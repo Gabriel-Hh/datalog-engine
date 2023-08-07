@@ -2,7 +2,7 @@ options{
 
     STATIC = false;
     LOOKAHEAD = 2;
-    DEBUG_PARSER = true;
+    DEBUG_PARSER = false;
     ERROR_REPORTING = true;
 }
 
@@ -13,6 +13,10 @@ package parser;
 import c6591.ASTClasses.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
 
 public class DatalogParser {
 
@@ -40,6 +44,56 @@ public class DatalogParser {
                 }
             }
         }
+    }
+
+    // Checks that all rule head variable are also present in body
+    static boolean checkSafety(Rule rule) {
+        Set<String> bodyVariables = new HashSet<>();
+        
+        for (int i = 0; i < rule.body.predicates.size(); i++) {
+            for (int j = 0; j < rule.body.predicates.get(i).terms.size(); j++) {
+                
+                Term term = rule.body.predicates.get(i).terms.get(j);
+                if (term instanceof Variable) {
+                    bodyVariables.add(((Variable) term).name);
+                }
+            }
+        }
+        for (int i = 0; i < rule.head.predicate.terms.size(); i++) {
+            
+            Term term = rule.head.predicate.terms.get(i);
+            if (term instanceof Variable && !bodyVariables.contains(((Variable) term).name)) {
+                System.out.println("Unsafe: Variable " + term.name + " in Rule " + rule.head.predicate.name);
+                return false; // Variable in head not found in body
+            }
+        }
+    return true;
+    }
+
+    List<JoinCondition> identifyJoinConditions(List<Predicate> predicates) {
+        Map<String, List<Tuple<Predicate, Integer>>> variableToPredicates = new HashMap<>();
+
+        for (int i = 0; i < predicates.size(); i++) {
+            Predicate predicate = predicates.get(i);
+            for (int j = 0; j < predicate.terms.size(); j++) {
+                Term term = predicate.terms.get(j);
+                List<Tuple<Predicate, Integer>> predicateList = variableToPredicates.get(term.name);
+                if (predicateList == null) {
+                    predicateList = new ArrayList<>();
+                    variableToPredicates.put(term.name, predicateList);
+                }
+                predicateList.add(new Tuple<Predicate, Integer>(predicate, j + 1)); // +1 because SQL is 1-indexed
+            }
+        }
+
+        List<JoinCondition> joinConditions = new ArrayList<>();
+        for (String variableName : variableToPredicates.keySet()) {
+            if (variableToPredicates.get(variableName).size() > 1) {
+                joinConditions.add(new JoinCondition(variableName, variableToPredicates.get(variableName)));
+            }
+        }
+
+        return joinConditions;
     }
 }
 
@@ -98,13 +152,18 @@ Rule Rule() :
     {
         rule.head = head;
         rule.body = body;
-        
+    }
+    <PERIOD>
+    { 
+        checkSafety(rule);
+
         // The 'source' of a head variable is used in SQL SELECT as (predicate.alias).ai 
         //  Where 'alias' is the distinct table name in which the variable first appears
         // in the body of the rule (e.g table AS table1) and ai is the columnName (a + index) in the SQL table.
         setVariableSource(head, body); 
+        
+        rule.body.joinConditions = identifyJoinConditions(rule.body.predicates);
     }
-    <PERIOD>
     { return rule; }
 }
 

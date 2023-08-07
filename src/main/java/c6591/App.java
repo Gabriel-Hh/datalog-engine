@@ -24,7 +24,7 @@ public class App {
         String filePath = inputDirectory + fileName;
 
         
-        System.out.println("Running Token.parse:");
+        System.out.println("Running Token_Raquib.parse:");
         facts = Token_Raquib.parse(filePath);
 
         System.out.println("Running H2test:");
