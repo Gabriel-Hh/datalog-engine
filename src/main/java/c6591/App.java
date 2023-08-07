@@ -5,6 +5,9 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import c6591.ASTClasses.Program;
+import oldTestJavaFiles.H2test;
+import oldTestJavaFiles.InitDatabase;
+import oldTestJavaFiles.Token_Raquib;
 //import c6591.SQLGenerator;
 import parser.DatalogParser;
 import parser.ParseException;
@@ -23,6 +26,9 @@ public class App {
         }
         String filePath = inputDirectory + fileName;
 
+        System.out.println("======================================================");
+        System.out.println("Running OLD TEST CODE");
+        System.out.println("======================================================");
         
         System.out.println("Running Token_Raquib.parse:");
         facts = Token_Raquib.parse(filePath);
@@ -36,7 +42,11 @@ public class App {
         System.out.println("Running InitDatabase.printFacts:");
         InitDatabase.printFacts();
 
-
+        //ENGINE ACTUAL CODE
+        
+        System.out.println("======================================================");
+        System.out.println("Running ENGINE CODE");
+        System.out.println("======================================================");
         System.out.println("Running the javaCC parser:");
         Program program = new Program();
         try {

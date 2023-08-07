@@ -1,4 +1,4 @@
-package c6591;
+package oldTestJavaFiles;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -85,7 +85,7 @@ public class InitDatabase {
     }
 
     private static void createRuleTable(ArrayList<ArrayList<String>> rule){
-        //TODO: Create rule table
+        //Create rule table
     }
 
     public static void printFacts(){
