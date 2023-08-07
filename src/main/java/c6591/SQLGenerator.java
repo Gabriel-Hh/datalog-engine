@@ -54,9 +54,9 @@ public class SQLGenerator {
     private String generateInsertStatement(Fact fact) {
         String predicateName = fact.predicate.name;
         String values = fact.predicate.terms.stream()
-            .map(term -> term instanceof Variable ? "?" : "'" + ((Constant) term).value + "'")
+            .map(term -> term instanceof Variable ? "?" : "'" + ((Constant) term).name + "'")
             .collect(Collectors.joining(", "));
-        return "INSERT INTO " + predicateName + " VALUES (" + values + ");";
+        return "INSERT INTO " + predicateName + " VALUES (" + values + ")";
     }
 
     private String generateCreateTableStatement(Predicate predicate) {
@@ -64,26 +64,38 @@ public class SQLGenerator {
         String columns = IntStream.range(0, predicate.terms.size())
             .mapToObj(i -> "a" + (i + 1) + " VARCHAR(255)")
             .collect(Collectors.joining(", "));
-        return "CREATE TABLE " + predicateName + " (" + columns + ");";
+        return "CREATE TABLE " + predicateName + " (" + columns + ")";
     }
 
     private String generateRuleQueryStatement(Rule rule) {
         String head = rule.head.predicate.name;
 
         String select = rule.head.predicate.terms.stream()
-            .map(term -> ((Variable) term).source + "." + "a" + (((Variable) term).index + 1))
+            .map(term -> ((term instanceof Variable) ? term.source + "." + "a" + term.index : term.source))
             .collect(Collectors.joining(", "));
 
         String from = rule.body.predicates.stream()
             .map(p -> p.name + " AS " + p.alias)
             .collect(Collectors.joining(", "));
 
-        String where = rule.body.joinConditions.stream()
-        .flatMap(jc -> jc.tupleList.stream()
-            .map(tuple -> tuple.first.alias + "." + "a" + (tuple.second)))
-        .collect(Collectors.joining(" = ", "", " AND "));
-
-        return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + " WHERE " + where + ";";
+            String where = rule.body.joinConditions.stream()
+            .map(jc -> {
+                if (jc.constantTuple != null) {
+                    return jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName + "'";
+                }
+                else {
+                    List<String> conditions = new ArrayList<>();
+                    for (int i = 0; i < jc.tupleList.size() - 1; i++) {
+                        Tuple<Predicate, Integer> current = jc.tupleList.get(i);
+                        Tuple<Predicate, Integer> next = jc.tupleList.get(i + 1);
+                        conditions.add(current.first.alias + ".a" + current.second + " = " + next.first.alias + ".a" + next.second);
+                    }
+                    return String.join(" AND ", conditions);
+                }
+            })
+            .collect(Collectors.joining(" AND "));
+    
+        return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + (where.isEmpty() ? "" : " WHERE " + where);
     }
 
     public Map<String, String> getTables() {
@@ -99,11 +111,17 @@ public class SQLGenerator {
     }
 
     public void printAll() {
+        System.out.println("------------------------------------------------------");
         System.out.println("Tables:");
+        System.out.println("------------------------------------------------------");
         tables.forEach((k, v) -> System.out.println(k + ": " + v));
+        System.out.println("------------------------------------------------------");
         System.out.println("Rules:");
+        System.out.println("------------------------------------------------------");
         rules.forEach((k, v) -> System.out.println(k + ": " + v));
+        System.out.println("------------------------------------------------------");
         System.out.println("Facts:");
+        System.out.println("------------------------------------------------------");
         facts.forEach((k, v) -> System.out.println(k + ": " + v));
     }
 }

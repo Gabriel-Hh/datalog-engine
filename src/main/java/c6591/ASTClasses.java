@@ -69,10 +69,18 @@ public class ASTClasses {
     public static class JoinCondition {
         public String variableName;
         public List<Tuple<Predicate,Integer>> tupleList;
+        public Tuple<Predicate,Integer> constantTuple;
 
         public JoinCondition(String variableName, List<Tuple<Predicate,Integer>> tupleList) {
             this.variableName = variableName;
             this.tupleList = tupleList;
+            this.constantTuple = null;
+        }
+
+        public JoinCondition(String variableName, Tuple<Predicate,Integer> constantTuple) {
+            this.variableName = variableName;
+            this.tupleList = null;
+            this.constantTuple = constantTuple;
         }
     }
 
@@ -88,37 +96,33 @@ public class ASTClasses {
         }
     }
 
-    public static abstract class Term {
-        public String name;
-        public String source;
-        public int index;
-    }
-
-    public static class Variable extends Term {
+    public static class Term {
         public String name;
         public String source;
         public int index;
 
-        public Variable(String name, String source, int index) {
+        public Term(String name, String source, int index) {
             this.name = name;
             this.source = source;
             this.index = index;
         }
     }
 
+    public static class Variable extends Term {
+
+        public Variable(String name, String source, int index) {
+            super(name, source, index);
+        }
+    }
+
     public static class Constant extends Term {
-        public String value;
-        public String source;
-        public int index;
 
         public Constant(String value) {
-            this.value = value;
+            super(value, null, 0);
         }
 
         public Constant(String value, String source, int index) {
-            this.value = value;
-            this.source = source;
-            this.index = index;
+            super(value, source, index);
         }
     }
 
