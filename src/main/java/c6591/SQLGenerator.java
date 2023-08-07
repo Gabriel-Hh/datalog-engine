@@ -11,16 +11,17 @@ import c6591.ASTClasses.*;
 
 public class SQLGenerator {
 
-    private Map<String, String> tables = new HashMap<>();
-    private Map<String, List<String>> rules = new HashMap<>();
-    private Map<String, List<String>> facts = new HashMap<>();
+    private static HashMap<String, String> tables = new HashMap<>();
+    private static HashMap<String, List<String>> rules = new HashMap<>();
+    private static HashMap<String, List<String>> facts = new HashMap<>();
 
-    public SQLGenerator(Program program) {
+    public static Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> generateSQL(Program program) {
         generateSQLForFacts(program.facts);
         generateSQLForRules(program.rules);
+        return new Triple<>(tables, facts, rules);
     }
 
-    private void generateSQLForFacts(List<Fact> factsList) {
+    private static void generateSQLForFacts(List<Fact> factsList) {
         for (Fact fact : factsList) {
             String predicateName = fact.predicate.name;
             String insertStatement = generateInsertStatement(fact);
@@ -34,7 +35,7 @@ public class SQLGenerator {
         }
     }
 
-    private void generateSQLForRules(List<Rule> rulesList) {
+    private static void generateSQLForRules(List<Rule> rulesList) {
         for (Rule rule : rulesList) {
             String predicateName = rule.head.predicate.name;
             List<String> ruleStatements = new ArrayList<>();
@@ -51,7 +52,7 @@ public class SQLGenerator {
         }
     }
 
-    private String generateInsertStatement(Fact fact) {
+    private static String generateInsertStatement(Fact fact) {
         String predicateName = fact.predicate.name;
         String values = fact.predicate.terms.stream()
             .map(term -> term instanceof Variable ? "?" : "'" + ((Constant) term).name + "'")
@@ -59,7 +60,7 @@ public class SQLGenerator {
         return "INSERT INTO " + predicateName + " VALUES (" + values + ")";
     }
 
-    private String generateCreateTableStatement(Predicate predicate) {
+    private static String generateCreateTableStatement(Predicate predicate) {
         String predicateName = predicate.name;
         String columns = IntStream.range(0, predicate.terms.size())
             .mapToObj(i -> "a" + (i + 1) + " VARCHAR(255)")
@@ -67,7 +68,7 @@ public class SQLGenerator {
         return "CREATE TABLE " + predicateName + " (" + columns + ")";
     }
 
-    private String generateRuleQueryStatement(Rule rule) {
+    private static String generateRuleQueryStatement(Rule rule) {
         String head = rule.head.predicate.name;
 
         String select = rule.head.predicate.terms.stream()
@@ -110,7 +111,7 @@ public class SQLGenerator {
         return facts;
     }
 
-    public void printAll() {
+    public static void printAll() {
         System.out.println("------------------------------------------------------");
         System.out.println("Tables:");
         System.out.println("------------------------------------------------------");

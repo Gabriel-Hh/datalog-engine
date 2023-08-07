@@ -3,10 +3,14 @@ package c6591;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 
 import c6591.ASTClasses.Program;
+import c6591.ASTClasses.Triple;
+import c6591.ASTClasses.Tuple;
 import oldTestJavaFiles.H2test;
-import oldTestJavaFiles.InitDatabase;
 import oldTestJavaFiles.Token_Raquib;
 //import c6591.SQLGenerator;
 import parser.DatalogParser;
@@ -14,7 +18,8 @@ import parser.ParseException;
 
 public class App {
     public static void main(String[] args) {
-        
+        Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
+
         //Determine the input file
         String inputDirectory = System.getProperty("user.dir") + "/input/";
         String fileName = "test.dl"; //default test file.
@@ -36,19 +41,15 @@ public class App {
         System.out.println("Running H2test:");
         H2test.test();
 
-        System.out.println("Running InitDatabase.init:");
-        InitDatabase.init(facts, new ArrayList<ArrayList<ArrayList<String>>>());
 
-        System.out.println("Running InitDatabase.printFacts:");
-        InitDatabase.printFacts();
-
-        //ENGINE ACTUAL CODE
+        //ENGINE CODE
         
         System.out.println("======================================================");
         System.out.println("Running ENGINE CODE");
         System.out.println("======================================================");
         System.out.println("Running the javaCC parser:");
         Program program = new Program();
+        
         try {
             // Create a FileInputStream for the file to be parsed
             FileInputStream fis = new FileInputStream(filePath);
@@ -65,8 +66,14 @@ public class App {
         }
 
         System.out.println("Running SQLGenerator:");
-        SQLGenerator sqlGenerator = new SQLGenerator(program);
+        sqlStatements =  SQLGenerator.generateSQL(program);
+        System.out.println("Sql statements generated successfully.");
+        SQLGenerator.printAll();
 
-        sqlGenerator.printAll();
+        System.out.println("Running InitDatabase.init:");
+        InitDatabase.init(new Tuple<>(sqlStatements.first, sqlStatements.second));
+        InitDatabase.printAll();
+
+
     }
 }
