@@ -1,4 +1,43 @@
 parent(john, alice).
-likes(alice, chocolate).
-sibling(john, bob, mary).
-sibling(X,Y):-parent(x),parent(y).
+parent(jane, alice).
+parent(jane, bob).
+parent(alice, charlie).
+parent(bob, dave).
+parent(george, eve).
+parent(helen, frank).
+parent(ian, gary).
+parent(charlie, hannah).
+parent(dave, ian).
+parent(eve, jack).
+parent(frank, karen).
+parent(gary, luke).
+parent(hannah, mike).
+parent(ian, nancy).
+parent(jack, oliver).
+parent(karen, pat).
+parent(luke, quinn).
+parent(mike, rachel).
+parent(nancy, steve).
+parent(oliver, tom).
+parent(pat, ursula).
+parent(quinn, victor).
+parent(rachel, wendy).
+parent(steve, xander).
+parent(tom, yara).
+parent(ursula, zach).
+parent(victor, ash).
+parent(wendy, ben).
+parent(xander, cat).
+grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
+sibling(X, Y) :- parent(Z, X), parent(Z, Y).
+aunt_or_uncle(X, Z) :- sibling(X, Y), parent(Y, Z).
+cousin(X, Y) :- aunt_or_uncle(Z, X), parent(Z, Y).
+great_grandparent(X, W) :- grandparent(X, Y), parent(Y, W).
+nephew_or_niece(X, Y) :- parent(Z, X), sibling(Z, Y).
+son_or_daughter(X, Y) :- parent(Y, X).
+son_in_law(X, Y) :- parent(Y, Z), married(X, Z).
+daughter_in_law(X, Y) :- parent(Y, Z), married(Z, X).
+grandchild(X, Z) :- grandparent(Z, X).
+constInHead(X,const,Y):- parent(X,Y).
+constInBody(X,Y):-parent(X,rachel), parent(karen,Y).
+constInHeadAndInBody(jeff,X,rachel,Y):-parent(X,rachel), parent(karen,Y).

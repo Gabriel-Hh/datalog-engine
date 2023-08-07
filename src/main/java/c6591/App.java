@@ -1,6 +1,16 @@
 package c6591;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
+
+import c6591.ASTClasses.Program;
+import oldTestJavaFiles.H2test;
+import oldTestJavaFiles.InitDatabase;
+import oldTestJavaFiles.Token_Raquib;
+//import c6591.SQLGenerator;
+import parser.DatalogParser;
+import parser.ParseException;
 
 public class App {
     public static void main(String[] args) {
@@ -16,9 +26,12 @@ public class App {
         }
         String filePath = inputDirectory + fileName;
 
+        System.out.println("======================================================");
+        System.out.println("Running OLD TEST CODE");
+        System.out.println("======================================================");
         
-        System.out.println("Running Token.parse:");
-        facts = Token.parse(filePath);
+        System.out.println("Running Token_Raquib.parse:");
+        facts = Token_Raquib.parse(filePath);
 
         System.out.println("Running H2test:");
         H2test.test();
@@ -28,5 +41,32 @@ public class App {
 
         System.out.println("Running InitDatabase.printFacts:");
         InitDatabase.printFacts();
+
+        //ENGINE ACTUAL CODE
+        
+        System.out.println("======================================================");
+        System.out.println("Running ENGINE CODE");
+        System.out.println("======================================================");
+        System.out.println("Running the javaCC parser:");
+        Program program = new Program();
+        try {
+            // Create a FileInputStream for the file to be parsed
+            FileInputStream fis = new FileInputStream(filePath);
+            
+            // Create a new instance of the parser
+            DatalogParser parser = new DatalogParser(fis);
+
+            // Parse the file
+            program = parser.Program();
+            System.out.println("Program parsed successfully.");
+
+        } catch (FileNotFoundException | ParseException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Running SQLGenerator:");
+        SQLGenerator sqlGenerator = new SQLGenerator(program);
+
+        sqlGenerator.printAll();
     }
 }

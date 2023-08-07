@@ -1,0 +1,269 @@
+options{
+
+    STATIC = false;
+    LOOKAHEAD = 2;
+    DEBUG_PARSER = false;
+    ERROR_REPORTING = true;
+}
+
+PARSER_BEGIN(DatalogParser)
+
+package parser;
+
+import c6591.ASTClasses.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+
+public class DatalogParser {
+
+    // additional fields and methods can be added here
+
+    // Sets the source of Variable (and constants) in the rule head for sql 'SELECT' statement
+    static void setVariableSource(Head head, Body body) {
+        List<Term> terms = head.predicate.terms;
+        for (int i = 0; i < terms.size(); i++) {
+            Term term = terms.get(i);
+            if (term instanceof Variable) {
+                for (int j = 0; j < body.predicates.size(); j++) {
+                    Predicate predicate = body.predicates.get(j);
+                    boolean variableMatched = false;
+                    for (int k = 0; k < predicate.terms.size(); k++) {
+                        Term other = predicate.terms.get(k);
+                        if (other instanceof Variable && other.name.equals(term.name)) {
+                            variableMatched = true;
+                            term.source = predicate.alias;
+                            term.index = other.index;
+                            break;
+                        }
+                    }
+                    if (variableMatched) {
+                        break;
+                    }
+                }
+            }else term.source = "'" + term.name + "'"; //If a constant is in rule head, it should be inserted as itself.
+
+        }
+    }
+
+    // Checks that all rule head variable are also present in body
+    static boolean checkSafety(Rule rule) {
+        Set<String> bodyVariables = new HashSet<>();
+        
+        for (int i = 0; i < rule.body.predicates.size(); i++) {
+            for (int j = 0; j < rule.body.predicates.get(i).terms.size(); j++) {
+                
+                Term term = rule.body.predicates.get(i).terms.get(j);
+                if (term instanceof Variable) {
+                    bodyVariables.add(term.name);
+                }
+            }
+        }
+        for (int i = 0; i < rule.head.predicate.terms.size(); i++) {
+            
+            Term term = rule.head.predicate.terms.get(i);
+            if (term instanceof Variable && !bodyVariables.contains(term.name)) {
+                System.out.println("Unsafe: Variable " + term.name + " in Rule " + rule.head.predicate.name);
+                // TODO Make unsafe rule throw fatal error to stop parsing and end engine
+                return false; // Variable in head not found in body
+            }
+        }
+    return true;
+    }
+
+    // Identifies lists all join condition (and constant values) for the 'WHERE' clause of rule sql statement.
+    List<JoinCondition> identifyJoinConditions(List<Predicate> predicates) {
+        Map<String, List<Tuple<Predicate, Integer>>> variableToPredicates = new HashMap<>();
+        List<JoinCondition> joinConditions = new ArrayList<>();
+
+        for (int i = 0; i < predicates.size(); i++) {
+            Predicate predicate = predicates.get(i);
+            for (int j = 0; j < predicate.terms.size(); j++) {
+                Term term = predicate.terms.get(j);
+                
+                if(term instanceof Variable){
+                    List<Tuple<Predicate, Integer>> predicateList = variableToPredicates.get(term.name);
+                    if (predicateList == null) {
+                        predicateList = new ArrayList<>();
+                        variableToPredicates.put(term.name, predicateList);
+                    }
+                    predicateList.add(new Tuple<Predicate, Integer>(predicate, j + 1)); // +1 because SQL is 1-indexed
+                }
+                else if(term instanceof Constant){
+                    joinConditions.add(new JoinCondition(term.name, new Tuple<Predicate,Integer>(predicate, j + 1)));
+                }
+            }
+        }
+
+        for (String variableName : variableToPredicates.keySet()) {
+            if (variableToPredicates.get(variableName).size() > 1) {
+                joinConditions.add(new JoinCondition(variableName, variableToPredicates.get(variableName)));
+            }
+        }
+
+        return joinConditions;
+    }
+}
+
+PARSER_END(DatalogParser)
+
+SKIP:
+{
+    <WHITESPACE: (" " | "\t" | "\n" | "\r")+ >
+}
+
+// Tokens
+TOKEN :
+{
+    <VAR_NAME: ["A"-"Z"](["a"-"z","A"-"Z","0"-"9","_"])*> |
+    <PRED_CONST_NAME: ["a"-"z"](["a"-"z","A"-"Z","0"-"9","_"])*> |
+    <PERIOD: "."> |
+    <COMMA: ",">
+}
+
+Program Program() :
+{
+    List<Rule> rules = new ArrayList<>();
+    List<Fact> facts = new ArrayList<>();
+    Statement statement;
+}
+{
+    ( statement = Statement()
+        {
+            if (statement instanceof Rule) rules.add((Rule) statement);
+            else if (statement instanceof Fact) facts.add((Fact) statement);
+        }
+    )*
+    { return new Program(rules, facts); }
+}
+
+Statement Statement() :
+{
+    Rule rule;
+    Fact fact;
+}
+{
+    LOOKAHEAD(Predicate() ":-" ) rule = Rule() { return rule; }
+    |
+    fact = Fact() { return fact; }
+}
+
+
+Rule Rule() :
+{
+    Head head;
+    Body body;
+    Rule rule = new Rule();
+}
+{
+    head = Head() ":-" body = Body(rule)
+    {
+        rule.head = head;
+        rule.body = body;
+    }
+    <PERIOD>
+    { 
+        checkSafety(rule);
+
+        // The 'source' of a head variable is used in SQL SELECT as (predicate.alias).ai 
+        //  Where 'alias' is the distinct table name in which the variable first appears
+        // in the body of the rule (e.g table AS table1) and ai is the columnName (a + index) in the SQL table.
+        setVariableSource(head, body); 
+
+        rule.body.joinConditions = identifyJoinConditions(rule.body.predicates);
+    }
+    { return rule; }
+}
+
+Fact Fact() :
+{
+    Predicate predicate;
+}
+{
+    predicate = Predicate(null) // No rule for a fact
+    <PERIOD>
+    { return new Fact(predicate); }
+}
+
+Head Head() :
+{
+    Predicate predicate;
+}
+{
+    predicate = Predicate(null) // No rule for a head
+    { return new Head(predicate); }
+}
+
+Body Body(Rule rule) :
+{
+    List<Predicate> predicates = new ArrayList<>();
+    Predicate predicate;
+}
+{
+        predicate = Predicate(rule)
+        { predicates.add(predicate); }
+    
+    (
+        <COMMA> predicate = Predicate(rule)
+        { predicates.add(predicate); }
+    )*
+
+    { return new Body(predicates); }
+}
+
+Predicate Predicate(Rule rule) :
+{
+    String name;
+    List<Term> terms = new ArrayList<>();
+    Term term;
+    String alias = null;
+}
+{
+    name = <PRED_CONST_NAME>.image
+    {
+        int count = rule != null ? rule.bodyPredicateCounts.getOrDefault(name, 0) + 1 : 1;
+        if (rule != null) rule.bodyPredicateCounts.put(name, count);
+        alias = name + count;
+    }
+    "(" 
+        term = Term() { term.source = alias; term.index = terms.size() + 1; terms.add(term); } // +1 because the sql tables are 1-indexed.
+    (
+        <COMMA> term = Term() { term.source = alias; term.index = terms.size() + 1; terms.add(term); }
+    )*
+    ")"
+    { return new Predicate(name, terms, alias); }
+}
+
+Term Term() :
+{
+    Variable variable;
+    Constant constant;
+}
+{
+    variable = Variable() { return variable; }
+    |
+    constant = Constant() { return constant; }
+}
+
+Variable Variable() :
+{
+    String name;
+}
+{
+    name = <VAR_NAME>.image
+    { return new Variable(name, null, 0); } // Source and index to be set later
+}
+
+Constant Constant() :
+{
+    String value;
+}
+{
+    value = <PRED_CONST_NAME>.image
+    { return new Constant(value); }
+}
+
+

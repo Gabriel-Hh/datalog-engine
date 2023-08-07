@@ -1,4 +1,4 @@
-package c6591;
+package oldTestJavaFiles;
 
 import java.util.ArrayList;
 //import java.util.StringTokenizer;
@@ -9,7 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 //class to split apart tokens from inputed datalog file.
-public class Token {
+public class Token_Raquib {
 
 	public static void main(String[] args) {
 		String file = "datalog_program.txt"; //the input file name.
