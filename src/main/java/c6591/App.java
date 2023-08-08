@@ -6,15 +6,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-
+import parser.DatalogParser;
+import parser.ParseException;
 import c6591.ASTClasses.Program;
 import c6591.ASTClasses.Triple;
 import c6591.ASTClasses.Tuple;
+import c6591.FixedPoint;
+
 import oldTestJavaFiles.H2test;
 import oldTestJavaFiles.Token_Raquib;
 //import c6591.SQLGenerator;
-import parser.DatalogParser;
-import parser.ParseException;
+
 
 public class App {
     public static void main(String[] args) {
@@ -70,10 +72,22 @@ public class App {
         System.out.println("Sql statements generated successfully.");
         SQLGenerator.printAll();
 
-        System.out.println("Running InitDatabase.init:");
+        System.out.println("======================================================");
+        System.out.println("Running InitDatabase.init():");
+        System.out.println("======================================================");
         InitDatabase.init(new Tuple<>(sqlStatements.first, sqlStatements.second));
         InitDatabase.printAll();
 
-
+        System.out.println("======================================================");
+        System.out.println("Running FixedPoint.find():");
+        System.out.println("======================================================");
+        try{
+            FixedPoint.find(sqlStatements);
+        } catch (Exception e) {
+            System.out.println("Error: FixedPoint.find() " + e.getMessage());
+        }
+        System.out.println("Fixed point found successfully.");
+        System.out.println("======================================================");
+        InitDatabase.printFacts();
     }
 }

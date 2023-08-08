@@ -1,0 +1,7 @@
+person(paul).
+first(X):-person(X).
+second(X):-first(X).
+third(X):-second(X).
+fourth(X):-third(X).
+fifth(X):-fourth(X).
+sixth(X):-fifth(X).
