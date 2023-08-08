@@ -65,7 +65,14 @@ public class SQLGenerator {
         String columns = IntStream.range(0, predicate.terms.size())
             .mapToObj(i -> "a" + (i + 1) + " VARCHAR(255)")
             .collect(Collectors.joining(", "));
-        return "CREATE TABLE " + predicateName + " (" + columns + ")";
+        
+        // Generating the primary key clause, this enforces our table are sets (NO DUPLICATES)
+        String primaryKeyColumns = IntStream.range(0, predicate.terms.size())
+            .mapToObj(i -> "a" + (i + 1))
+            .collect(Collectors.joining(", "));
+        String primaryKey = "PRIMARY KEY (" + primaryKeyColumns + ")";
+
+        return "CREATE TABLE " + predicateName + " (" + columns + ", " + primaryKey + ")";
     }
 
     private static String generateRuleQueryStatement(Rule rule) {
