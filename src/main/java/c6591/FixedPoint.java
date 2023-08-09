@@ -31,7 +31,8 @@ public class FixedPoint {
         //Evaluate until a fixed point is reached
         while(!isFixedPoint){
             // Run an iteration of rules
-            System.out.println("Iteration: " + iteration);
+            if(App.verbose) {System.out.println("Iteration: " + iteration);}
+
             for (String ruleHead : rules.keySet()){
                 for (String rule : rules.get(ruleHead)){
                     try {
@@ -62,7 +63,7 @@ public class FixedPoint {
                     isChanged = true;
                 }
                 tablesCounts.put(table, count);
-                System.out.println("Table: " + table + " Count: " + count);
+                if(App.verbose) {System.out.println("Table: " + table + " Count: " + count);}
             }
 
             // If the tables have not changed, we have reached a fixed point
@@ -70,6 +71,8 @@ public class FixedPoint {
                 isFixedPoint = true;
             }
             iteration++;   
-        } 
+        }
+    System.out.println("Final Iteration: " + iteration);
+    System.out.println("Fixed point found successfully.");
     }
 }

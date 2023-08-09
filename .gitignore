@@ -29,3 +29,6 @@ buildNumber.properties
 *.log
 log/
 logs/
+
+# Output files
+output/
