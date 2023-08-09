@@ -74,7 +74,7 @@ public class FixedPoint {
             }
             iteration++;   
         }
-    System.out.println("Final Iteration: " + iteration);
+    System.out.println("Final Iteration: " + (iteration-1));
     System.out.println("Fixed point found successfully.");
     }
 }
