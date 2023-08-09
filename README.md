@@ -7,7 +7,7 @@ Once you have a local branch with maven setup, you compile and run with:
 - `mvn compile` to compile
 - `mvn exec:java` to run with the default test file (test.dl)
 - `mvn exec:java "-Dexec.args=other_filename"` to run a different datalog file from the **input** folder.
-**NEW**
+- **NEW:**
 - `mvn exec:java "-Dexec.args=-verbose"` for complete console output.
 - `mvn exec:java "-Dexec.args=other_filename -verbose"` to run a different datalog file from the **input** folder AND get complete console output.
 - `mvn exec:java "-Dexec.mainClass=c6591.AnotherClass"` to run a different classes main method.
