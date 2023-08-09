@@ -15,33 +15,34 @@ public class InitDatabase {
     private static HashMap<String, String> tables = new HashMap<>();
     private static HashMap<String, List<String>> facts = new HashMap<>();
 
+
     public static void init(Tuple<HashMap<String,String>,HashMap<String,List<String>>> tables_facts) {
         tables = tables_facts.first;
         facts = tables_facts.second;
         
 
-        // Create and Connect to the H2 database
+        // Connect to the H2 database
         System.out.println("Connecting to database...");
-        try 
-        {
-        
-        conn = DriverManager.getConnection("jdbc:h2:mem:test");
+        conn = App.conn;
 
-        // Create tables 
-        System.out.println("Creating tables...");
-        for(String sql : tables.values()) {
-            conn.createStatement().execute(sql);
-        }
+        try{
+            
 
-        // Insert facts
-        System.out.println("Inserting facts...");
-        for (String table : facts.keySet()) {
-            for (String sql : facts.get(table)) {
+            // Create tables 
+            System.out.println("Creating tables...");
+            for(String sql : tables.values()) {
                 conn.createStatement().execute(sql);
             }
-        }
 
-        System.out.println("Database initialized.");    
+            // Insert facts
+            System.out.println("Inserting facts...");
+            for (String table : facts.keySet()) {
+                for (String sql : facts.get(table)) {
+                    conn.createStatement().execute(sql);
+                }
+            }
+
+            System.out.println("Database initialized.");    
         } catch (SQLException e) {
             System.out.println("Error: InitDatabase" + e.getMessage());
         }
@@ -54,6 +55,8 @@ public class InitDatabase {
     }
 
     public static void printTableList(){
+        conn = App.conn;
+
         System.out.println("Table List: ");
         try{
         String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PUBLIC' AND TABLE_TYPE = 'TABLE' ORDER BY TABLE_NAME";
@@ -67,6 +70,8 @@ public class InitDatabase {
     }
 
     public static void printFacts(){
+        conn = App.conn;
+
         System.out.println("Facts: ");
         for(String table : tables.keySet()){
             String sql = "SELECT * FROM " + table;
@@ -92,6 +97,7 @@ public class InitDatabase {
     public static void writeFacts() {
     String timestamp = new SimpleDateFormat("_yyyy-MM-dd_HH-mm-ss").format(new Date());
     String outputPath = "output/output" + timestamp + ".txt";
+    conn = App.conn;
 
     try (FileWriter writer = new FileWriter(outputPath)) {
         for (String table : tables.keySet()) {
@@ -120,7 +126,6 @@ public class InitDatabase {
         System.out.println("Error: Could not write facts to output file." + e.getMessage());
     }
 }
-
 
 
 

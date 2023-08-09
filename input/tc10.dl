@@ -1,0 +1,12 @@
+edge(n2, n5).
+edge(n5, n8).
+edge(n1, n3).
+edge(n4, n6).
+edge(n7, n10).
+edge(n3, n7).
+edge(n8, n2).
+edge(n9, n4).
+edge(n10, n1).
+edge(n6, n9).
+path(X, Y) :- edge(X, Y).
+path(X, Y) :- edge(X, Z), path(Z, Y).

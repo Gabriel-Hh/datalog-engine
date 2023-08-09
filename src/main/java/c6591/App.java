@@ -2,6 +2,8 @@ package c6591;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.List;
 
@@ -15,10 +17,18 @@ import c6591.ASTClasses.Tuple;
 
 public class App {
     public static boolean verbose = false; // TRUE prints intermediate steps and final results to console.
+    public static Connection conn;
 
     public static void main(String[] args) {
         Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
         
+        //DATABASE CONNECTION
+        try{
+            conn = DriverManager.getConnection("jdbc:h2:mem:test;MODE=MySQL");
+        } catch (Exception e) {
+            System.out.println("Error: InitDatabase.connect() " + e.getMessage());}
+
+
         //ARGS (INPUT FILE + VERBOSE) 
         // Both arguments are optional. If no arguments are given, the default test file is used with verbose = false.
         String inputDirectory = System.getProperty("user.dir") + "/input/";
@@ -111,7 +121,11 @@ public class App {
         InitDatabase.writeFacts();
         long writeEnd = System.currentTimeMillis();
         
-
+        try{
+            conn.close();
+        } catch (Exception e) {
+            System.out.println("Error: InitDatabase.close() " + e.getMessage());
+        }
 
         // RUNTIME BREAKDOWN
         System.out.println("======================================================");

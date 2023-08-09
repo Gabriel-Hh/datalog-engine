@@ -24,7 +24,7 @@ public class FixedPoint {
 
         
         //Connect to the H2 database
-        conn = DriverManager.getConnection("jdbc:h2:mem:test");
+        conn = App.conn;    
         
         int iteration = 1;
 
@@ -33,10 +33,12 @@ public class FixedPoint {
             // Run an iteration of rules
             if(App.verbose) {System.out.println("Iteration: " + iteration);}
 
+
             for (String ruleHead : rules.keySet()){
                 for (String rule : rules.get(ruleHead)){
                     try {
                         conn.createStatement().execute(rule);
+                        // conn.commit();
                     } catch (SQLException e) {
                         // If the error code matches the unique constraint violation, ignore it
                         if (e.getErrorCode() == 23505) {
@@ -44,11 +46,11 @@ public class FixedPoint {
                             continue;
                         }
                         // Otherwise, rethrow the exception
-                        throw e;
-                    }
-                } 
-            }     
-            
+                        else throw e;
+                    } 
+                }
+            }
+
             // Check if the tables have changed
                 isChanged = false;
             for (String table : tables.keySet()){
@@ -72,7 +74,7 @@ public class FixedPoint {
             }
             iteration++;   
         }
-    System.out.println("Final Iteration: " + iteration);
-    System.out.println("Fixed point found successfully.");
+        System.out.println("Final Iteration: " + (iteration-1));
+        System.out.println("Fixed point found successfully.");
     }
 }
