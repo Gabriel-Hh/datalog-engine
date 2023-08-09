@@ -39,7 +39,6 @@ public class SQLGenerator {
     private static void generateSQLForRules(List<Rule> rulesList) {
         for (Rule rule : rulesList) {
             String predicateName = rule.head.predicate.name;
-            List<String> ruleStatements = new ArrayList<>();
 
             if (!tables.containsKey(predicateName)) {
                 String createTableStatement = generateCreateTableStatement(rule.head.predicate);
@@ -47,9 +46,7 @@ public class SQLGenerator {
             }
 
             String ruleQueryStatement = generateRuleQueryStatement(rule);
-            ruleStatements.add(ruleQueryStatement);
-
-            rules.put(predicateName, ruleStatements);
+            rules.computeIfAbsent(predicateName, k -> new ArrayList<>()).add(ruleQueryStatement); //creates a new arraylist if its the first rule for that predicate, and adds rule sql statement.
         }
     }
 
@@ -76,23 +73,55 @@ public class SQLGenerator {
         return "CREATE TABLE " + predicateName + " (" + columns + ", " + primaryKey + ")";
     }
 
+    // private static String generateRuleQueryStatement(Rule rule) {
+    //     String head = rule.head.predicate.name;
+
+    //     String select = rule.head.predicate.terms.stream()
+    //         .map(term -> ((term instanceof Variable) ? term.source + "." + "a" + term.index : term.source))
+    //         .collect(Collectors.joining(", "));
+
+    //     String from = rule.body.predicates.stream()
+    //         .map(p -> p.name + " AS " + p.alias)
+    //         .collect(Collectors.joining(", "));
+
+    //         String where = rule.body.joinConditions.stream()
+    //         .map(jc -> {
+    //             if (jc.constantTuple != null) {
+    //                 return jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName + "'";
+    //             }
+    //             else {
+    //                 List<String> conditions = new ArrayList<>();
+    //                 for (int i = 0; i < jc.tupleList.size() - 1; i++) {
+    //                     Tuple<Predicate, Integer> current = jc.tupleList.get(i);
+    //                     Tuple<Predicate, Integer> next = jc.tupleList.get(i + 1);
+    //                     conditions.add(current.first.alias + ".a" + current.second + " = " + next.first.alias + ".a" + next.second);
+    //                 }
+    //                 return String.join(" AND ", conditions);
+    //             }
+    //         })
+    //         .collect(Collectors.joining(" AND "));
+    
+    //     return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + (where.isEmpty() ? "" : " WHERE " + where + "");
+    // }
+
     private static String generateRuleQueryStatement(Rule rule) {
         String head = rule.head.predicate.name;
-
-        String select = rule.head.predicate.terms.stream()
+    
+        List<String> termSelectors = rule.head.predicate.terms.stream()
             .map(term -> ((term instanceof Variable) ? term.source + "." + "a" + term.index : term.source))
-            .collect(Collectors.joining(", "));
-
+            .collect(Collectors.toList());
+    
+        String select = String.join(", ", termSelectors);
+    
         String from = rule.body.predicates.stream()
             .map(p -> p.name + " AS " + p.alias)
             .collect(Collectors.joining(", "));
-
-            String where = rule.body.joinConditions.stream()
+    
+        String where = rule.body.joinConditions.stream()
             .map(jc -> {
                 if (jc.constantTuple != null) {
                     return jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName + "'";
-                }
-                else {
+                } else {
                     List<String> conditions = new ArrayList<>();
                     for (int i = 0; i < jc.tupleList.size() - 1; i++) {
                         Tuple<Predicate, Integer> current = jc.tupleList.get(i);
@@ -104,8 +133,16 @@ public class SQLGenerator {
             })
             .collect(Collectors.joining(" AND "));
     
-        return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + (where.isEmpty() ? "" : " WHERE " + where);
+        // Generate ON DUPLICATE KEY UPDATE section
+        String onDuplicateKeyUpdate = termSelectors.stream()
+            .map(termSelector -> termSelector.split("\\.")[1] + "=VALUES(" + termSelector.split("\\.")[1] + ")")
+            .collect(Collectors.joining(", "));
+    
+        return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + 
+               (where.isEmpty() ? "" : " WHERE " + where) + 
+               " ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate;
     }
+    
 
     public Map<String, String> getTables() {
         return tables;

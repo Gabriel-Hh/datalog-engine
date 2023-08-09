@@ -26,16 +26,10 @@ public class App {
     public static void main(String[] args) {
         Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
         
-    //     //Delete old DB file if it exists.
-    //     try {
-    //     Files.deleteIfExists(Paths.get("./diskDB_test" + ".mv.db"));
-    //     // Add additional lines here if you use any other H2 storage options that create additional files
-    // } catch (IOException e) {
-    //     System.out.println("Error deleting the previous database files: " + e.getMessage());
-    // }
 
         try{
-            conn = DriverManager.getConnection("jdbc:h2:./diskDB_test"); //Persistent connection.
+            conn = DriverManager.getConnection("jdbc:h2:./diskDB_test;MODE=MySQL"); //Persistent connection.
+
         } catch (Exception e) {System.out.println("Error: Main Connection to database failed. " + e.getMessage());}
 
         
