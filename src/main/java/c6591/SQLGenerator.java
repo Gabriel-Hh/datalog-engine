@@ -39,7 +39,6 @@ public class SQLGenerator {
     private static void generateSQLForRules(List<Rule> rulesList) {
         for (Rule rule : rulesList) {
             String predicateName = rule.head.predicate.name;
-            List<String> ruleStatements = new ArrayList<>();
 
             if (!tables.containsKey(predicateName)) {
                 String createTableStatement = generateCreateTableStatement(rule.head.predicate);
@@ -47,9 +46,7 @@ public class SQLGenerator {
             }
 
             String ruleQueryStatement = generateRuleQueryStatement(rule);
-            ruleStatements.add(ruleQueryStatement);
-
-            rules.put(predicateName, ruleStatements);
+            rules.computeIfAbsent(predicateName, k -> new ArrayList<>()).add(ruleQueryStatement); //creates a new arraylist if its the first rule for that predicate, and adds rule sql statement.
         }
     }
 
@@ -103,8 +100,8 @@ public class SQLGenerator {
                 }
             })
             .collect(Collectors.joining(" AND "));
-    
-        return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + (where.isEmpty() ? "" : " WHERE " + where);
+            
+        return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + (where.isEmpty() ? "" : " WHERE " + where + " ON DUPLICATE KEY UPDATE a1=a1");
     }
 
     public Map<String, String> getTables() {

@@ -29,26 +29,33 @@ public class FixedPoint {
         int iteration = 1;
 
         //Evaluate until a fixed point is reached
-        while(!isFixedPoint){
+        while(iteration <10){
             // Run an iteration of rules
             if(App.verbose) {System.out.println("Iteration: " + iteration);}
 
+            conn.setAutoCommit(true);
             for (String ruleHead : rules.keySet()){
                 for (String rule : rules.get(ruleHead)){
                     try {
+                        System.out.println("Rule: " + rule);
                         conn.createStatement().execute(rule);
+                        conn.commit();
                     } catch (SQLException e) {
                         // If the error code matches the unique constraint violation, ignore it
                         if (e.getErrorCode() == 23505) {
+                            System.out.println("Duplicate entry");
                             // This 'error' is normal is enforcing that are tables are sets.
                             continue;
                         }
                         // Otherwise, rethrow the exception
-                        throw e;
-                    }
+                        else throw e;
+                    }finally{
+                            conn.commit();
+                        }
                 } 
-            }     
-            
+            }
+            // conn.commit();     
+            // conn.setAutoCommit(true);
             // Check if the tables have changed
                 isChanged = false;
             for (String table : tables.keySet()){
@@ -72,7 +79,7 @@ public class FixedPoint {
             }
             iteration++;   
         }
-    System.out.println("Final Iteration: " + iteration);
+    System.out.println("Final Iteration: " + (iteration-1));
     System.out.println("Fixed point found successfully.");
     }
 }
