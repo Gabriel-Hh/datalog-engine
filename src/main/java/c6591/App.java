@@ -2,8 +2,14 @@ package c6591;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.DriverManager;
 
 import parser.DatalogParser;
 import parser.ParseException;
@@ -15,9 +21,23 @@ import c6591.ASTClasses.Tuple;
 
 public class App {
     public static boolean verbose = false; // TRUE prints intermediate steps and final results to console.
+    public static Connection conn = null;
 
     public static void main(String[] args) {
         Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
+        
+    //     //Delete old DB file if it exists.
+    //     try {
+    //     Files.deleteIfExists(Paths.get("./diskDB_test" + ".mv.db"));
+    //     // Add additional lines here if you use any other H2 storage options that create additional files
+    // } catch (IOException e) {
+    //     System.out.println("Error deleting the previous database files: " + e.getMessage());
+    // }
+
+        try{
+            conn = DriverManager.getConnection("jdbc:h2:./diskDB_test"); //Persistent connection.
+        } catch (Exception e) {System.out.println("Error: Main Connection to database failed. " + e.getMessage());}
+
         
         //ARGS (INPUT FILE + VERBOSE) 
         // Both arguments are optional. If no arguments are given, the default test file is used with verbose = false.
@@ -121,5 +141,20 @@ public class App {
         System.out.println("Database Initialization: " + (initEnd - initStart) + "ms");
         System.out.println("Fixed Point: " + (fixedPointEnd - fixedPointStart) + "ms");
         System.out.println("Write to File: " + (writeEnd - writeStart) + "ms");
+
+
+        try {
+        conn.close();
+    } catch (SQLException e) {
+        System.out.println("Error closing main database connection " + e.getMessage());
+    }
+
+        //Delete DB file if it exists.
+        try {
+        Files.deleteIfExists(Paths.get("./diskDB_test" + ".mv.db"));
+        // Add additional lines here if you use any other H2 storage options that create additional files
+    } catch (IOException e) {
+        System.out.println("Error deleting the previous database files: " + e.getMessage());
+    }
     }
 }

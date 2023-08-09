@@ -14,18 +14,19 @@ public class InitDatabase {
     private static Connection conn;
     private static HashMap<String, String> tables = new HashMap<>();
     private static HashMap<String, List<String>> facts = new HashMap<>();
+    
 
     public static void init(Tuple<HashMap<String,String>,HashMap<String,List<String>>> tables_facts) {
         tables = tables_facts.first;
         facts = tables_facts.second;
-        
+        Connection conn = App.conn;
 
         // Create and Connect to the H2 database
         System.out.println("Connecting to database...");
         try 
         {
         
-        conn = DriverManager.getConnection("jdbc:h2:mem:test");
+        //conn = DriverManager.getConnection("jdbc:h2:mem:test");
 
         // Create tables 
         System.out.println("Creating tables...");
@@ -45,15 +46,29 @@ public class InitDatabase {
         } catch (SQLException e) {
             System.out.println("Error: InitDatabase" + e.getMessage());
         }
+        //close connection
+        // try{
+        //     conn.close();
+        // } catch (SQLException e) {
+        //     System.out.println("Error: InitDatabase - Could not close connection");
+        // }
     }
 
 
     public static void printAll(){
+        // try{
+
         printTableList();
         printFacts();
+
+        // } catch (SQLException e) {
+        //     System.out.println("Error: InitDatabase - Could not print all");
+        // }
     }
 
     public static void printTableList(){
+        conn = App.conn;
+
         System.out.println("Table List: ");
         try{
         String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PUBLIC' AND TABLE_TYPE = 'TABLE' ORDER BY TABLE_NAME";
@@ -67,6 +82,7 @@ public class InitDatabase {
     }
 
     public static void printFacts(){
+        conn = App.conn;
         System.out.println("Facts: ");
         for(String table : tables.keySet()){
             String sql = "SELECT * FROM " + table;
@@ -92,40 +108,36 @@ public class InitDatabase {
     public static void writeFacts() {
     String timestamp = new SimpleDateFormat("_yyyy-MM-dd_HH-mm-ss").format(new Date());
     String outputPath = "output/output" + timestamp + ".txt";
+    conn = App.conn;
 
-    try (FileWriter writer = new FileWriter(outputPath)) {
-        for (String table : tables.keySet()) {
-            String sql = "SELECT * FROM " + table;
+        try (FileWriter writer = new FileWriter(outputPath)) {
+            
 
-            try {
-                ResultSet rs = conn.createStatement().executeQuery(sql);
-                while (rs.next()) {
-                    String fact = (table + "(");
-                    ResultSetMetaData rsmd = rs.getMetaData();
-                    int numCols = rsmd.getColumnCount();
-                    for (int i = 1; i <= numCols; i++) {
-                        fact += rs.getString(i) + ", ";
+            for (String table : tables.keySet()) {
+                String sql = "SELECT * FROM " + table;
+
+                try {
+                    ResultSet rs = conn.createStatement().executeQuery(sql);
+                    while (rs.next()) {
+                        String fact = (table + "(");
+                        ResultSetMetaData rsmd = rs.getMetaData();
+                        int numCols = rsmd.getColumnCount();
+                        for (int i = 1; i <= numCols; i++) {
+                            fact += rs.getString(i) + ", ";
+                        }
+                        fact = fact.substring(0, fact.length() - 2); // get rid of extra comma
+                        writer.write(fact + ").\n");
                     }
-                    fact = fact.substring(0, fact.length() - 2); // get rid of extra comma
-                    writer.write(fact + ").\n");
+                } catch (SQLException e) {
+                    System.out.println("Error: InitDatabase - Could not access facts for output file " + e.getMessage());
                 }
-            } catch (SQLException e) {
-                System.out.println("Error: InitDatabase - Could not access facts for output file " + e.getMessage());
             }
+            writer.flush();
+            writer.close();
+            System.out.println("Facts written to file successfully.");
+        } catch (IOException e) {
+            System.out.println("Error: Could not write facts to output file." + e.getMessage());
         }
-        writer.flush();
-        writer.close();
-        System.out.println("Facts written to file successfully.");
-    } catch (IOException e) {
-        System.out.println("Error: Could not write facts to output file." + e.getMessage());
     }
-}
 
-
-
-
-
-
-
-    
 }

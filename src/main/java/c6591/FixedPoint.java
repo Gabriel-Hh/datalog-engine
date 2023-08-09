@@ -11,7 +11,7 @@ public class FixedPoint {
     private static HashMap<String, List<String>> rules = new HashMap<>();
     private static HashMap<String,String> tables = new HashMap<>();
     private static HashMap<String,Integer> tablesCounts = new HashMap<>();
-    private static Connection conn;
+    public static Connection conn;
     private static boolean isFixedPoint = false;
     private static boolean isChanged = false;
     
@@ -24,8 +24,10 @@ public class FixedPoint {
 
         
         //Connect to the H2 database
-        conn = DriverManager.getConnection("jdbc:h2:mem:test");
-        
+        //conn = DriverManager.getConnection("jdbc:h2:mem:test");
+        conn = App.conn;
+
+
         int iteration = 1;
 
         //Evaluate until a fixed point is reached
