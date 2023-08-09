@@ -18,6 +18,7 @@ public class SQLGenerator {
     public static Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> generateSQL(Program program) {
         generateSQLForFacts(program.facts);
         generateSQLForRules(program.rules);
+        System.out.println("Sql statements generated successfully.");
         return new Triple<>(tables, facts, rules);
     }
 

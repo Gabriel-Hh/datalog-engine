@@ -1,17 +1,19 @@
 package c6591;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.*;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 import c6591.ASTClasses.Tuple;
-import c6591.ASTClasses.Triple;
+
 
 public class InitDatabase {
     private static Connection conn;
     private static HashMap<String, String> tables = new HashMap<>();
     private static HashMap<String, List<String>> facts = new HashMap<>();
-    private static HashMap<String, List<String>> rules = new HashMap<>();
 
     public static void init(Tuple<HashMap<String,String>,HashMap<String,List<String>>> tables_facts) {
         tables = tables_facts.first;
@@ -25,7 +27,7 @@ public class InitDatabase {
         
         conn = DriverManager.getConnection("jdbc:h2:mem:test");
 
-        // Create tables as a batch execute of the values that are the sql statements
+        // Create tables 
         System.out.println("Creating tables...");
         for(String sql : tables.values()) {
             conn.createStatement().execute(sql);
@@ -39,10 +41,10 @@ public class InitDatabase {
             }
         }
 
+        System.out.println("Database initialized.");    
         } catch (SQLException e) {
             System.out.println("Error: InitDatabase" + e.getMessage());
         }
-        System.out.println("Database initialized.");
     }
 
 
@@ -86,5 +88,44 @@ public class InitDatabase {
             } 
         }
     }
+
+    public static void writeFacts() {
+    String timestamp = new SimpleDateFormat("_yyyy-MM-dd_HH-mm-ss").format(new Date());
+    String outputPath = "output/output" + timestamp + ".txt";
+
+    try (FileWriter writer = new FileWriter(outputPath)) {
+        for (String table : tables.keySet()) {
+            String sql = "SELECT * FROM " + table;
+
+            try {
+                ResultSet rs = conn.createStatement().executeQuery(sql);
+                while (rs.next()) {
+                    String fact = (table + "(");
+                    ResultSetMetaData rsmd = rs.getMetaData();
+                    int numCols = rsmd.getColumnCount();
+                    for (int i = 1; i <= numCols; i++) {
+                        fact += rs.getString(i) + ", ";
+                    }
+                    fact = fact.substring(0, fact.length() - 2); // get rid of extra comma
+                    writer.write(fact + ").\n");
+                }
+            } catch (SQLException e) {
+                System.out.println("Error: InitDatabase - Could not access facts for output file " + e.getMessage());
+            }
+        }
+        writer.flush();
+        writer.close();
+        System.out.println("Facts written to file successfully.");
+    } catch (IOException e) {
+        System.out.println("Error: Could not write facts to output file." + e.getMessage());
+    }
+}
+
+
+
+
+
+
+
     
 }
