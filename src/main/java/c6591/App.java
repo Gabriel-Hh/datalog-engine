@@ -17,7 +17,7 @@ public class App {
     public static boolean verbose = false; // TRUE prints intermediate steps and final results to console.
 
     public static void main(String[] args) {
-        Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
+        Triple<HashMap<String,List<String>>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
         
         //ARGS (INPUT FILE + VERBOSE) 
         // Both arguments are optional. If no arguments are given, the default test file is used with verbose = false.

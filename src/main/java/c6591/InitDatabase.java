@@ -12,10 +12,10 @@ import c6591.ASTClasses.Tuple;
 
 public class InitDatabase {
     private static Connection conn;
-    private static HashMap<String, String> tables = new HashMap<>();
+    private static HashMap<String, List<String>> tables = new HashMap<>();
     private static HashMap<String, List<String>> facts = new HashMap<>();
 
-    public static void init(Tuple<HashMap<String,String>,HashMap<String,List<String>>> tables_facts) {
+    public static void init(Tuple<HashMap<String,List<String>>,HashMap<String,List<String>>> tables_facts) {
         tables = tables_facts.first;
         facts = tables_facts.second;
         
@@ -29,8 +29,11 @@ public class InitDatabase {
 
         // Create tables 
         System.out.println("Creating tables...");
-        for(String sql : tables.values()) {
-            conn.createStatement().execute(sql);
+        for(List<String> threeTables : tables.values()) {
+            for(String sql : threeTables) {
+                conn.createStatement().execute(sql);
+            }
+            
         }
 
         // Insert facts

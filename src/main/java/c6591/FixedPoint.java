@@ -9,13 +9,13 @@ import c6591.ASTClasses.Triple;
 
 public class FixedPoint {
     private static HashMap<String, List<String>> rules = new HashMap<>();
-    private static HashMap<String,String> tables = new HashMap<>();
+    private static HashMap<String,List<String>> tables = new HashMap<>();
     private static HashMap<String,Integer> tablesCounts = new HashMap<>();
     private static Connection conn;
     private static boolean isFixedPoint = false;
     private static boolean isChanged = false;
     
-    public static void find(Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements) throws SQLException{
+    public static void find(Triple<HashMap<String,List<String>>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements) throws SQLException{
         rules = sqlStatements.third;
         tables = sqlStatements.first;
         //Initialize the tablesCounts to 0 for all table
