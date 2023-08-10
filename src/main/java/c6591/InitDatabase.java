@@ -18,14 +18,15 @@ public class InitDatabase {
     public static void init(Tuple<HashMap<String,List<String>>,HashMap<String,List<String>>> tables_facts) {
         tables = tables_facts.first;
         facts = tables_facts.second;
-        
+        conn = App.conn;
+
 
         // Create and Connect to the H2 database
         System.out.println("Connecting to database...");
         try 
         {
         
-        conn = DriverManager.getConnection("jdbc:h2:mem:test");
+        
 
         // Create tables 
         System.out.println("Creating tables...");
@@ -57,6 +58,7 @@ public class InitDatabase {
     }
 
     public static void printTableList(){
+        conn = App.conn;
         System.out.println("Table List: ");
         try{
         String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PUBLIC' AND TABLE_TYPE = 'TABLE' ORDER BY TABLE_NAME";
@@ -70,6 +72,7 @@ public class InitDatabase {
     }
 
     public static void printFacts(){
+        conn = App.conn;
         System.out.println("Facts: ");
         for(String table : tables.keySet()){
             String sql = "SELECT * FROM " + table;
@@ -93,6 +96,7 @@ public class InitDatabase {
     }
 
     public static void writeFacts() {
+    conn = App.conn;
     String timestamp = new SimpleDateFormat("_yyyy-MM-dd_HH-mm-ss").format(new Date());
     String outputPath = "output/output" + timestamp + ".txt";
 

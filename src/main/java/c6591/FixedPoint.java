@@ -24,7 +24,7 @@ public class FixedPoint {
 
         
         //Connect to the H2 database
-        conn = DriverManager.getConnection("jdbc:h2:mem:test");
+        conn = App.conn;
         
         int iteration = 1;
 

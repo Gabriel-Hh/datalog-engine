@@ -2,6 +2,9 @@ package c6591;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -15,10 +18,15 @@ import c6591.ASTClasses.Tuple;
 
 public class App {
     public static boolean verbose = false; // TRUE prints intermediate steps and final results to console.
+    public static Connection conn;
 
     public static void main(String[] args) {
         Triple<HashMap<String,List<String>>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
         
+    try{
+        conn = DriverManager.getConnection("jdbc:h2:mem:test:Mode=MySQl");
+    } catch (SQLException e) { System.out.println("Error: Connection to database failed."+ e.getMessage());}
+
         //ARGS (INPUT FILE + VERBOSE) 
         // Both arguments are optional. If no arguments are given, the default test file is used with verbose = false.
         String inputDirectory = System.getProperty("user.dir") + "/input/";
@@ -94,7 +102,7 @@ public class App {
         
         long fixedPointStart = System.currentTimeMillis();
         try{
-            FixedPoint.find(sqlStatements);
+            SFixedPoint.find(sqlStatements);
         } catch (Exception e) {
             System.out.println("Error: FixedPoint.find() " + e.getMessage());
         }
@@ -121,5 +129,11 @@ public class App {
         System.out.println("Database Initialization: " + (initEnd - initStart) + "ms");
         System.out.println("Fixed Point: " + (fixedPointEnd - fixedPointStart) + "ms");
         System.out.println("Write to File: " + (writeEnd - writeStart) + "ms");
+
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            System.out.println("Error: Connection to database failed."+ e.getMessage());
+        }
     }
 }
