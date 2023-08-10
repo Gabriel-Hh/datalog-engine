@@ -88,6 +88,22 @@ public class SQLGenerator {
         String head = rule.head.predicate.name;
         List<String> ruleStatements = new ArrayList<>(); 
 
+        if(rule.body.joinConditions == null | rule.body.joinConditions.isEmpty()){
+            //SELECT 
+            String select = rule.head.predicate.terms.stream()
+            .map(term -> ((term instanceof Variable) ? term.source + "." + "a" + term.index : term.source))
+            .collect(Collectors.joining(", "));
+            
+            //FROM
+            String from = rule.body.predicates.stream()
+            .map(predicate -> predicate.name + " AS " + predicate.alias)
+            .collect(Collectors.joining(", "));
+
+
+            ruleStatements.add("INSERT INTO d" + head + " SELECT " + select + " FROM " + from);
+            return ruleStatements;
+        }
+
         for (JoinCondition jc : rule.body.joinConditions) {
              HashSet <String>test = new HashSet<>();
             List<Predicate> missingPredicates = new ArrayList<>();
