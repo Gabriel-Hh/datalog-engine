@@ -114,11 +114,12 @@ public class SQLGenerator {
                 HashSet <String> requiredByHead = new HashSet<>();
                 HashSet <String> presentInJoinCondition = new HashSet<>();
                 List<Predicate> missingPredicates = new ArrayList<>();
+                boolean onlyConstants = true;
 
                 //Gather all WHERE conditions for the constants in the body of rule
                 for (JoinCondition jc : rule.body.joinConditions) {
                     if(jc.tupleList == null){ // implies jc.constant != null
-                        wheresFromConstants.add(jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName);
+                        wheresFromConstants.add(jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName + "'");
                     }
                 }
                 System.out.println("wheresFromConstants: " + wheresFromConstants);
@@ -126,7 +127,8 @@ public class SQLGenerator {
                 // Gather all the Variable conditions to join semi-naively through UNION on condition.
                 for (JoinCondition jc : rule.body.joinConditions) {
                     if(jc.tupleList != null){
-                    
+                    onlyConstants = false;
+
                     // Which predicates are required by the head in Variable sources
                     for(Term term : rule.head.predicate.terms){
                         if(term instanceof Variable){
@@ -154,8 +156,10 @@ public class SQLGenerator {
                     System.out.println("select: " + select);
                     
                     //FROM
+                    //TODO make set with predicates as we porcess, to avoid duplicates
                     String from1 = "d" + jc.tupleList.get(0).first.name + " AS " + jc.tupleList.get(0).first.alias;
                     for(int i = 1; i < jc.tupleList.size(); i++){
+                        
                         Tuple<Predicate,Integer> tuple = jc.tupleList.get(i);
                         from1 += ", (SELECT * FROM " + tuple.first.name + " UNION SELECT * FROM d" + tuple.first.name + ") AS " + tuple.first.alias;
                         
@@ -175,11 +179,6 @@ public class SQLGenerator {
 
 
                     String  where = "";
-                    //Taken care of in seperate loop
-                    // if(jc.constantTuple != null){
-                    //     where += jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName + "' AND";
-                    // }
-                    //else {
                         List<String> conditions = new ArrayList<>();
                         for (int i = 0; i < jc.tupleList.size() - 1; i++) {
                             Tuple<Predicate, Integer> current = jc.tupleList.get(i);
@@ -188,7 +187,7 @@ public class SQLGenerator {
                         }
                         where += String.join(" AND ", conditions);
                         
-                        where += String.join(" AND ", wheresFromConstants);
+                        where += (wheresFromConstants.isEmpty() ? "" : " AND " + String.join(" AND ", wheresFromConstants));
                     //}
 
                     String onDuplicateKeyUpdate = "";
@@ -203,11 +202,11 @@ public class SQLGenerator {
                     }
                     onDuplicateKeyUpdate = onDuplicateKeyUpdate.substring(0, onDuplicateKeyUpdate.length()-2);
                     String returnStr = "INSERT INTO " + "dd" + head + 
-                    " ( SELECT " + select + " FROM " + from1 + (from3.isEmpty() ? "," + from3 : "") +
+                    " SELECT " + select + " FROM " + from1 + (from3.isEmpty() ? from3 : "") +
                     (where.isEmpty() ? "" : " WHERE " + where) +
-                    ") UNION " +
-                    "(SELECT " + select + " FROM " + from2 + (from3.isEmpty() ? "," + from3 : "") + 
-                    (where.isEmpty() ? "" : " WHERE " + where) + ") )" +
+                    " UNION " +
+                    "SELECT " + select + " FROM " + from2 + (from3.isEmpty() ? from3 : "") + 
+                    (where.isEmpty() ? "" : " WHERE " + where) +
                     " ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate;
                     
                     //DEBUG
@@ -216,6 +215,10 @@ public class SQLGenerator {
                     ruleStatements.add( returnStr);
                 }    
                 }
+            if(onlyConstants){
+                //TODO reuse select, + standard from + constant only where.
+                ;
+            }
 
             return ruleStatements;
             }

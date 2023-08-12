@@ -39,11 +39,6 @@ public class InitDatabase {
             }        
         }
 
-            // Create tables 
-            System.out.println("Creating tables...");
-            for(String sql : tables.values()) {
-                conn.createStatement().execute(sql);
-            }
 
             // Insert facts
             System.out.println("Inserting facts...");
