@@ -10,7 +10,7 @@ import c6591.ASTClasses.Triple;
 public class SFixedPoint {
     private static HashMap<String, List<String>> rules = new HashMap<>();
     private static HashMap<String,List<String>> tables = new HashMap<>();
-    private static HashMap<String,Integer> tablesCounts = new HashMap<>();
+    //private static HashMap<String,Integer> tablesCounts = new HashMap<>();
     private static Connection conn;
     private static boolean isFixedPoint = false;
     private static boolean isChanged = false;
@@ -20,7 +20,7 @@ public class SFixedPoint {
         rules = sqlStatements.third;
         tables = sqlStatements.first;
         
-        tablesCounts = tables.keySet().stream().collect(Collectors.toMap(Function.identity(), k -> 0, (v1, v2) -> v1, HashMap::new));
+        //tablesCounts = tables.keySet().stream().collect(Collectors.toMap(Function.identity(), k -> 0, (v1, v2) -> v1, HashMap::new));
         conn = App.conn;
         int iteration = 1;
         

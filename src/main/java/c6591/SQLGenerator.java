@@ -87,103 +87,135 @@ public class SQLGenerator {
         //DEBUG
         System.out.println("generateRuleQueryStatement");
         String head = rule.head.predicate.name;
-        List<String> ruleStatements = new ArrayList<>(); 
+        List<String> ruleStatements = new ArrayList<>();
+        List<String> wheresFromConstants = new ArrayList<>();
 
+        // If there are no join conditions, we can just do a simple select from the body
         if(rule.body.joinConditions == null | rule.body.joinConditions.isEmpty()){
             //SELECT 
             String select = rule.head.predicate.terms.stream()
-            .map(term -> ((term instanceof Variable) ? term.source + "." + "a" + term.index : term.source))
+            .map(term -> ((term instanceof Variable) ? "d" + term.source + "." + "a" + term.index : "d" + term.source))
             .collect(Collectors.joining(", "));
             
             //FROM
             String from = rule.body.predicates.stream()
-            .map(predicate -> predicate.name + " AS " + predicate.alias)
+            .map(predicate -> "d" + predicate.name + " AS " + "d" + predicate.alias)
             .collect(Collectors.joining(", "));
 
 
-            ruleStatements.add("INSERT INTO d" + head + " SELECT " + select + " FROM " + from);
+            ruleStatements.add("INSERT INTO dd" + head + " SELECT " + select + " FROM " + from);
+            System.out.println(rule.head.predicate.name + ": " + ruleStatements);
             return ruleStatements;
         }
+        // If there are join conditions, complex semi-naive joining is required
+        else{
+                HashSet <String> requiredByHead = new HashSet<>();
+                HashSet <String> presentInJoinCondition = new HashSet<>();
+                List<Predicate> missingPredicates = new ArrayList<>();
 
-        for (JoinCondition jc : rule.body.joinConditions) {
-             HashSet <String>test = new HashSet<>();
-            List<Predicate> missingPredicates = new ArrayList<>();
-
-            for(Term term : rule.head.predicate.terms){
-                if( !test.contains(term.source)){
-                test.add(term.source);
-                for (Predicate p : rule.body.predicates)
-                    if (term.source.equals(p.alias)){
-                        missingPredicates.add(p);
+                //Gather all WHERE conditions for the constants in the body of rule
+                for (JoinCondition jc : rule.body.joinConditions) {
+                    if(jc.tupleList == null){ // implies jc.constant != null
+                        wheresFromConstants.add(jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName);
                     }
                 }
-            }
-
-            //SELECT 
-            String select = rule.head.predicate.terms.stream()
-            .map(term -> ((term instanceof Variable) ? term.source + "." + "a" + term.index : term.source))
-            .collect(Collectors.joining(", "));
+                System.out.println("wheresFromConstants: " + wheresFromConstants);
             
-            //FROM
-            String from1 = "d" + jc.tupleList.get(0).first.name + " AS " + jc.tupleList.get(0).first.alias + ", ";
-            for(int i = 1; i < jc.tupleList.size(); i++){
-                Tuple<Predicate,Integer> tuple = jc.tupleList.get(i);
-                from1 += "(SELECT * FROM" + tuple.first.name + "UNION SELECT * FROM d" + tuple.first.name + ") AS " + tuple.first.alias + ",";
-                
-            }System.out.println("from1: " + from1 );
+                // Gather all the Variable conditions to join semi-naively through UNION on condition.
+                for (JoinCondition jc : rule.body.joinConditions) {
+                    if(jc.tupleList != null){
+                    
+                    // Which predicates are required by the head in Variable sources
+                    for(Term term : rule.head.predicate.terms){
+                        if(term instanceof Variable){
+                        requiredByHead.add(term.source);
+                        }
+                    }
+                    // Which predicates are present in the join condition and will be added to from1
+                    if(jc.tupleList != null){
+                        for(Tuple<Predicate,Integer> p : jc.tupleList){
+                            presentInJoinCondition.add(p.first.alias);
+                        }
+                    }
+                    // Which predicates are required by the head but not present in the join condition, will be added to from3
+                    for (Predicate p : rule.body.predicates){
+                            if (!presentInJoinCondition.contains(p.alias) && requiredByHead.contains(p.alias)){
+                                missingPredicates.add(p);
+                            }
+                    }
 
-             String from2 = jc.tupleList.get(0).first.name + " AS " + jc.tupleList.get(0).first.alias + ", ";
-            for(int i = 1; i < jc.tupleList.size(); i++){
-                Tuple<Predicate,Integer> tuple = jc.tupleList.get(i);
-                from2 += "d" + tuple.first.name + " AS " + tuple.first.alias + ",";
-                
-            }System.out.println("form2: " + from2);
+                    //SELECT 
+                    String select = rule.head.predicate.terms.stream()
+                    .map(term -> ((term instanceof Variable) ? term.source + "." + "a" + term.index : term.source))
+                    .collect(Collectors.joining(", "));
+                    
+                    System.out.println("select: " + select);
+                    
+                    //FROM
+                    String from1 = "d" + jc.tupleList.get(0).first.name + " AS " + jc.tupleList.get(0).first.alias;
+                    for(int i = 1; i < jc.tupleList.size(); i++){
+                        Tuple<Predicate,Integer> tuple = jc.tupleList.get(i);
+                        from1 += ", (SELECT * FROM " + tuple.first.name + " UNION SELECT * FROM d" + tuple.first.name + ") AS " + tuple.first.alias;
+                        
+                    }System.out.println("from1: " + from1 );
 
-            String from3 = "";
-            for(Predicate p : missingPredicates){
-                from3 += p.name + " AS " + p.alias + ", ";
-            }System.out.println("form3: " + from3);
+                    String from2 = jc.tupleList.get(0).first.name + " AS " + jc.tupleList.get(0).first.alias;
+                    for(int i = 1; i < jc.tupleList.size(); i++){
+                        Tuple<Predicate,Integer> tuple = jc.tupleList.get(i);
+                        from2 += ", d" + tuple.first.name + " AS " + tuple.first.alias;
+                        
+                    }System.out.println("form2: " + from2);
+
+                    String from3 = "";
+                    for(Predicate p : missingPredicates){
+                        from3 += p.name + " AS " + p.alias + ", ";
+                    }System.out.println("form3: " + from3);
 
 
-            String  where = "";
-            
-            if(jc.constantTuple != null){
-                where += jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName + "' AND";
-            }
-            else {
-                List<String> conditions = new ArrayList<>();
-                for (int i = 0; i < jc.tupleList.size() - 1; i++) {
-                    Tuple<Predicate, Integer> current = jc.tupleList.get(i);
-                    Tuple<Predicate, Integer> next = jc.tupleList.get(i + 1);
-                    conditions.add(current.first.alias + ".a" + current.second + " = " + next.first.alias + ".a" + next.second);
+                    String  where = "";
+                    //Taken care of in seperate loop
+                    // if(jc.constantTuple != null){
+                    //     where += jc.constantTuple.first.alias + ".a" + jc.constantTuple.second + " = '" + jc.variableName + "' AND";
+                    // }
+                    //else {
+                        List<String> conditions = new ArrayList<>();
+                        for (int i = 0; i < jc.tupleList.size() - 1; i++) {
+                            Tuple<Predicate, Integer> current = jc.tupleList.get(i);
+                            Tuple<Predicate, Integer> next = jc.tupleList.get(i + 1);
+                            conditions.add(current.first.alias + ".a" + current.second + " = " + next.first.alias + ".a" + next.second);
+                        }
+                        where += String.join(" AND ", conditions);
+                        
+                        where += String.join(" AND ", wheresFromConstants);
+                    //}
+
+                    String onDuplicateKeyUpdate = "";
+                    List<Term> list = rule.head.predicate.terms;
+                    for (int i = 1; i < list.size()+1; i++) {
+                    if(list.get(i-1) instanceof Constant){
+                        //DONT DO IT
+                    }
+                    else {
+                        onDuplicateKeyUpdate += "a" + i + "=VALUES(a" + i + "), ";
+                    }
+                    }
+                    onDuplicateKeyUpdate = onDuplicateKeyUpdate.substring(0, onDuplicateKeyUpdate.length()-2);
+                    String returnStr = "INSERT INTO " + "dd" + head + 
+                    " ( SELECT " + select + " FROM " + from1 + (from3.isEmpty() ? "," + from3 : "") +
+                    (where.isEmpty() ? "" : " WHERE " + where) +
+                    ") UNION " +
+                    "(SELECT " + select + " FROM " + from2 + (from3.isEmpty() ? "," + from3 : "") + 
+                    (where.isEmpty() ? "" : " WHERE " + where) + ") )" +
+                    " ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate;
+                    
+                    //DEBUG
+                    System.out.println(rule.head.predicate.name + ": " + returnStr);
+
+                    ruleStatements.add( returnStr);
+                }    
                 }
-                where += String.join(" AND ", conditions);
+            return ruleStatements;
             }
-
-            String onDuplicateKeyUpdate = "";
-            List<Term> list = rule.head.predicate.terms;
-            for (int i = 1; i < list.size()+1; i++) {
-            if(list.get(i-1) instanceof Constant){
-                //DONT DO IT
-            }
-            else {
-                onDuplicateKeyUpdate += "a" + i + "=VALUES(a" + i + "), ";
-            }
-            }
-            onDuplicateKeyUpdate = onDuplicateKeyUpdate.substring(0, onDuplicateKeyUpdate.length()-2);
-            String returnStr = "INSERT INTO " + head + 
-                " (SELECT " + select + " FROM " + from1 + from3 +
-               (where.isEmpty() ? "" : " WHERE " + where) + 
-               " ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate + ")" + " UNION " +
-               "(SELECT " + select + " FROM " + from2 + from3 + 
-               (where.isEmpty() ? "" : " WHERE " + where) + 
-               " ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate + ")";
-            System.out.println(returnStr);
-
-            ruleStatements.add( returnStr);
-        
-        }
-        return ruleStatements;
     }
 
        
