@@ -7,7 +7,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-
 import parser.DatalogParser;
 import parser.ParseException;
 import c6591.ASTClasses.Program;
@@ -23,9 +22,12 @@ public class App {
     public static void main(String[] args) {
         Triple<HashMap<String,List<String>>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
         
+
+        //DATABASE CONNECTION
     try{
         conn = DriverManager.getConnection("jdbc:h2:mem:test:Mode=MySQl");
     } catch (SQLException e) { System.out.println("Error: Connection to database failed."+ e.getMessage());}
+
 
         //ARGS (INPUT FILE + VERBOSE) 
         // Both arguments are optional. If no arguments are given, the default test file is used with verbose = false.
@@ -119,7 +121,11 @@ public class App {
         InitDatabase.writeFacts();
         long writeEnd = System.currentTimeMillis();
         
-
+        try{
+            conn.close();
+        } catch (Exception e) {
+            System.out.println("Error: InitDatabase.close() " + e.getMessage());
+        }
 
         // RUNTIME BREAKDOWN
         System.out.println("======================================================");

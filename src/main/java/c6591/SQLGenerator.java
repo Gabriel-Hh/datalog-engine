@@ -54,6 +54,7 @@ public class SQLGenerator {
 
             List<String> ruleQueryStatements = generateRuleQueryStatement(rule);
             rules. computeIfAbsent(predicateName, k -> new ArrayList<>()).addAll(ruleQueryStatements);
+
         }
     }   
 
@@ -82,6 +83,7 @@ public class SQLGenerator {
         semiNaiveTables.add("CREATE TABLE dd" + predicateName + " (" + columns + ", " + primaryKey + ")");
         return semiNaiveTables;
     }
+
 
     private static List<String> generateRuleQueryStatement(Rule rule) {
         //DEBUG
@@ -214,9 +216,11 @@ public class SQLGenerator {
                     ruleStatements.add( returnStr);
                 }    
                 }
+
             return ruleStatements;
             }
     }
+    
 
        
 
