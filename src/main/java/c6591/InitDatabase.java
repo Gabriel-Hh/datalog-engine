@@ -12,21 +12,32 @@ import c6591.ASTClasses.Tuple;
 
 public class InitDatabase {
     private static Connection conn;
-    private static HashMap<String, String> tables = new HashMap<>();
+    private static HashMap<String, List<String>> tables = new HashMap<>();
     private static HashMap<String, List<String>> facts = new HashMap<>();
 
 
-    public static void init(Tuple<HashMap<String,String>,HashMap<String,List<String>>> tables_facts) {
+    public static void init(Tuple<HashMap<String,List<String>>,HashMap<String,List<String>>> tables_facts) {
         tables = tables_facts.first;
         facts = tables_facts.second;
-        
+
 
         // Connect to the H2 database
         System.out.println("Connecting to database...");
+
         conn = App.conn;
 
         try{
-            
+
+        
+        
+
+        // Create tables 
+        System.out.println("Creating tables...");
+        for(List<String> threeTables : tables.values()) {
+            for(String sql : threeTables) {
+                conn.createStatement().execute(sql);
+            }        
+        }
 
             // Create tables 
             System.out.println("Creating tables...");
@@ -95,6 +106,7 @@ public class InitDatabase {
     }
 
     public static void writeFacts() {
+    conn = App.conn;
     String timestamp = new SimpleDateFormat("_yyyy-MM-dd_HH-mm-ss").format(new Date());
     String outputPath = "output/output" + timestamp + ".txt";
     conn = App.conn;

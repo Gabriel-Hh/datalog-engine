@@ -4,4 +4,4 @@ second(X):-first(X).
 third(X):-second(X).
 fourth(X):-third(X).
 fifth(X):-fourth(X).
-sixth(X):-fifth(X).
+sixth(X,Y):-fifth(X), fourth(Y).
