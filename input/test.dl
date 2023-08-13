@@ -41,3 +41,4 @@ great_grandparent(X, W) :- grandparent(X, Y), parent(Y, W).
 nephew_or_niece(X, Y) :- parent(Z, X), sibling(Z, Y).
 son_or_daughter(X, Y) :- parent(Y, X).
 grandchild(X, Z) :- grandparent(Z, X).
+cousins(X,Y,Z):- sibling(X,Y), parent(Y,W), sibling(W,V), parent(Z,V).
