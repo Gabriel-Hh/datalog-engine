@@ -3,8 +3,11 @@ package c6591;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.sql.Connection;
+import java.sql.Statement;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import parser.DatalogParser;
@@ -22,13 +25,17 @@ public class App {
     public static void main(String[] args) {
         Triple<HashMap<String,List<String>>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
         
-
         //DATABASE CONNECTION
-    try{
-        // conn = DriverManager.getConnection("jdbc:h2:mem:test:MODE=MariaDB;DATABASE_TO_LOWER=TRUE");
-        conn = DriverManager.getConnection("jdbc:h2:mem:test:");
-    } catch (SQLException e) { System.out.println("Error: Connection to database failed."+ e.getMessage());}
-
+        String dbUrl = "jdbc:postgresql://localhost:5432/test";
+        String dbUser = "myuser";
+        String dbPassword = "password";
+        try{
+            
+            conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+            // conn = DriverManager.getConnection("jdbc:h2:mem:test:MODE=MariaDB;DATABASE_TO_LOWER=TRUE");
+            //conn = DriverManager.getConnection("jdbc:h2:mem:test:");
+        } catch (SQLException e) { System.out.println("Error: Connection to database failed."+ e.getMessage());}
+        dropAllTables();
 
         //ARGS (INPUT FILE + VERBOSE) 
         // Both arguments are optional. If no arguments are given, the default test file is used with verbose = false.
@@ -122,6 +129,8 @@ public class App {
         InitDatabase.writeFacts();
         long writeEnd = System.currentTimeMillis();
         
+        
+        //dropAllTables();
         try{
             conn.close();
         } catch (Exception e) {
@@ -136,11 +145,39 @@ public class App {
         System.out.println("Database Initialization: " + (initEnd - initStart) + "ms");
         System.out.println("Fixed Point: " + (fixedPointEnd - fixedPointStart) + "ms");
         System.out.println("Write to File: " + (writeEnd - writeStart) + "ms");
-
-        try {
-            conn.close();
-        } catch (SQLException e) {
-            System.out.println("Error: Connection to database failed."+ e.getMessage());
-        }
+        
     }
+
+    
+    
+    // public static void dropAllTables() {
+    //     try (Statement stmt = conn.createStatement()) {
+    //         // Fetch all table names
+    //         ResultSet rs = stmt.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname = 'public';");
+    //         while (rs.next()) {
+    //             String tableName = rs.getString(1);
+    //             stmt.executeUpdate("DROP TABLE IF EXISTS " + tableName + " CASCADE;");
+    //         }
+    //     } catch (SQLException e) {
+    //         System.out.println("Error dropping tables: " + e.getMessage());
+    //     }
+    // }
+    public static void dropAllTables() {
+    try (Statement stmt = conn.createStatement()) {
+        // Fetch all table names
+        ResultSet rs = stmt.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname = 'public';");
+        List<String> tableNames = new ArrayList<>();
+        while (rs.next()) {
+            tableNames.add(rs.getString(1));
+        }
+        rs.close();
+
+        for (String tableName : tableNames) {
+            stmt.executeUpdate("DROP TABLE IF EXISTS " + tableName + " CASCADE;");
+        }
+    } catch (SQLException e) {
+        System.out.println("Error dropping tables: " + e.getMessage());
+    }
+}
+
 }

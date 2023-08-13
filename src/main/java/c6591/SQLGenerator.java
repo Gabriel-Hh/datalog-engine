@@ -96,7 +96,7 @@ public class SQLGenerator {
         if(rule.body.joinConditions == null | rule.body.joinConditions.isEmpty()){
             //SELECT 
             String select = rule.head.predicate.terms.stream()
-            .map(term -> ((term instanceof Variable) ? "d" + term.source + "." + "a" + term.index : "d" + term.source))
+            .map(term -> ((term instanceof Variable) ? "d" + term.source + "." + "a" + term.index : term.source))
             .collect(Collectors.joining(", "));
             
             //FROM
@@ -105,7 +105,7 @@ public class SQLGenerator {
             .collect(Collectors.joining(", "));
 
 
-            ruleStatements.add("INSERT INTO dd" + head + " SELECT " + select + " FROM " + from);
+            ruleStatements.add("INSERT INTO dd" + head + " SELECT " + select + " FROM " + from  + " ON CONFLICT ON CONSTRAINT dd" + head + "_pkey DO NOTHING");
             System.out.println(rule.head.predicate.name + ": " + ruleStatements);
             return ruleStatements;
         }
@@ -211,24 +211,26 @@ public class SQLGenerator {
                         where += (wheresFromConstants.isEmpty() ? "" : " AND " + String.join(" AND ", wheresFromConstants));
                     //}
 
-                    String onDuplicateKeyUpdate = "";
-                    List<Term> list = rule.head.predicate.terms;
-                    for (int i = 1; i < list.size()+1; i++) {
-                    if(list.get(i-1) instanceof Constant){
-                        //DONT DO IT
-                    }
-                    else {
-                        onDuplicateKeyUpdate += "a" + i + "=VALUES(a" + i + "), ";
-                    }
-                    }
-                    onDuplicateKeyUpdate = onDuplicateKeyUpdate.substring(0, onDuplicateKeyUpdate.length()-2);
-                    String returnStr = "INSERT IGNORE INTO " + "dd" + head + 
+                    // String onDuplicateKeyUpdate = "";
+                    // List<Term> list = rule.head.predicate.terms;
+                    // for (int i = 1; i < list.size()+1; i++) {
+                    // if(list.get(i-1) instanceof Constant){
+                    //     //DONT DO IT
+                    // }
+                    // else {
+                    //     onDuplicateKeyUpdate += "a" + i + "=VALUES(a" + i + "), ";
+                    // }
+                    // }
+                    // onDuplicateKeyUpdate = onDuplicateKeyUpdate.substring(0, onDuplicateKeyUpdate.length()-2);
+                    
+                    String returnStr = "INSERT INTO " + "dd" + head + 
                     "( SELECT " + select + " FROM " + from1 + (from3.isEmpty() ? from3 : "") +
                     (where.isEmpty() ? "" : " WHERE " + where) +
                     " UNION " +
                     "SELECT " + select + " FROM " + from2 + (from3.isEmpty() ? from3 : "") + 
                     (where.isEmpty() ? "" : " WHERE " + where) + ") " 
                     //+ " )ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate
+                    + "ON CONFLICT ON CONSTRAINT dd" + head + "_pkey DO NOTHING"
                     ;
                     
                     //DEBUG

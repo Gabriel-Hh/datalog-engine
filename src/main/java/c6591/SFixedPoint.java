@@ -29,12 +29,17 @@ public class SFixedPoint {
             if(App.verbose){
                 System.out.println("Iteration: " + iteration);
             }
+            //DEBUG
+            System.out.println("Iteration: " + iteration);
+
             int count = 1;
             for(String ruleHead : rules.keySet()){
                 for(String rule : rules.get(ruleHead)){
                     //adding facts to the rules to the tables semi-naively
                     // ddp is made here with all the new rules
                     try{
+                        //DEBUG
+                        System.out.println("Exec Rule: " + rule);
                         conn.createStatement().execute(rule);
                     }catch(SQLException e){
                         if(e.getErrorCode() == 23505)
@@ -56,7 +61,7 @@ public class SFixedPoint {
                     System.out.println("colcount: " + colcount);
                 }
                 }catch(SQLException e){
-                    System.out.println("Cant et column coutn for" + table + e.getMessage()); 
+                    System.out.println("Cant et column count for" + table + e.getMessage()); 
                 }
                 String dtable = "d"+table;
 
