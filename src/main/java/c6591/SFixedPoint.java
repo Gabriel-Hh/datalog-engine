@@ -95,13 +95,12 @@ public class SFixedPoint {
                 //Make NOT In string
                 String whereNotExists = "(SELECT 1 From " + dtable + " WHERE ";
                 //BYPASS
-                colcount =1;
+                // colcount =1;
                 //BYPASS
                 for(int i=1; i<=colcount; i++){
                     whereNotExists += ddtable +".a"+ i + " = " + dtable + ".a" + i;
                     if(i != colcount)
                         whereNotExists += " AND ";}
-
 
                 String ddtable2dtable = "INSERT INTO " + dtable + " SELECT * FROM " + ddtable + " WHERE NOT EXISTS " + whereNotExists + ")";   
                 conn.createStatement().execute(ddtable2dtable);

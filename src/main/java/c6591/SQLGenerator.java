@@ -156,19 +156,40 @@ public class SQLGenerator {
                     System.out.println("select: " + select);
                     
                     //FROM
-                    //TODO make set with predicates as we porcess, to avoid duplicates
-                    String from1 = "d" + jc.tupleList.get(0).first.name + " AS " + jc.tupleList.get(0).first.alias;
+                    //TODO make set with predicates as we process, to avoid duplicates
+                    
+                    HashSet<String> duplicateCheck = new HashSet<>();
+                    Tuple<Predicate,Integer> tuple;
+
+                    tuple = jc.tupleList.get(0);
+                    String from1 = "d" + tuple.first.name + " AS " + tuple.first.alias;
+                    duplicateCheck.add(tuple.first.alias);
+
                     for(int i = 1; i < jc.tupleList.size(); i++){
-                        
-                        Tuple<Predicate,Integer> tuple = jc.tupleList.get(i);
-                        from1 += ", (SELECT * FROM " + tuple.first.name + " UNION SELECT * FROM d" + tuple.first.name + ") AS " + tuple.first.alias;
-                        
+                        tuple = jc.tupleList.get(i);
+
+                        if(!duplicateCheck.contains(tuple.first.name)){
+                            from1 += ", (SELECT * FROM " + tuple.first.name + " UNION SELECT * FROM d" + tuple.first.name + ") AS " + tuple.first.alias;
+                            
+                            duplicateCheck.add(tuple.first.name);
+                        }
+
                     }System.out.println("from1: " + from1 );
 
-                    String from2 = jc.tupleList.get(0).first.name + " AS " + jc.tupleList.get(0).first.alias;
+                    duplicateCheck.clear();
+
+                    tuple = jc.tupleList.get(0);
+                    String from2 = tuple.first.name + " AS " + tuple.first.alias;
+                    duplicateCheck.add(tuple.first.alias);
+
                     for(int i = 1; i < jc.tupleList.size(); i++){
-                        Tuple<Predicate,Integer> tuple = jc.tupleList.get(i);
-                        from2 += ", d" + tuple.first.name + " AS " + tuple.first.alias;
+                        tuple = jc.tupleList.get(i);
+                        
+                        if(!duplicateCheck.contains(tuple.first.name)){
+                            from2 += ", d" + tuple.first.name + " AS " + tuple.first.alias;
+                            
+                            duplicateCheck.add(tuple.first.name);
+                        }
                         
                     }System.out.println("form2: " + from2);
 
@@ -201,13 +222,14 @@ public class SQLGenerator {
                     }
                     }
                     onDuplicateKeyUpdate = onDuplicateKeyUpdate.substring(0, onDuplicateKeyUpdate.length()-2);
-                    String returnStr = "INSERT INTO " + "dd" + head + 
-                    " SELECT " + select + " FROM " + from1 + (from3.isEmpty() ? from3 : "") +
+                    String returnStr = "INSERT IGNORE INTO " + "dd" + head + 
+                    "( SELECT " + select + " FROM " + from1 + (from3.isEmpty() ? from3 : "") +
                     (where.isEmpty() ? "" : " WHERE " + where) +
                     " UNION " +
                     "SELECT " + select + " FROM " + from2 + (from3.isEmpty() ? from3 : "") + 
-                    (where.isEmpty() ? "" : " WHERE " + where) +
-                    " ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate;
+                    (where.isEmpty() ? "" : " WHERE " + where) + ") " 
+                    //+ " )ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate
+                    ;
                     
                     //DEBUG
                     System.out.println(rule.head.predicate.name + ": " + returnStr);

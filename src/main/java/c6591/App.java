@@ -25,7 +25,8 @@ public class App {
 
         //DATABASE CONNECTION
     try{
-        conn = DriverManager.getConnection("jdbc:h2:mem:test:Mode=MySQl");
+        // conn = DriverManager.getConnection("jdbc:h2:mem:test:MODE=MariaDB;DATABASE_TO_LOWER=TRUE");
+        conn = DriverManager.getConnection("jdbc:h2:mem:test:");
     } catch (SQLException e) { System.out.println("Error: Connection to database failed."+ e.getMessage());}
 
 
