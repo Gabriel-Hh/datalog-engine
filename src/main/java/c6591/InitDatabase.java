@@ -35,15 +35,12 @@ public class InitDatabase {
         System.out.println("Creating tables...");
         for(List<String> threeTables : tables.values()) {
             for(String sql : threeTables) {
+                //DEBUG
+                System.out.println(sql);
                 conn.createStatement().execute(sql);
             }        
         }
 
-            // Create tables 
-            System.out.println("Creating tables...");
-            for(String sql : tables.values()) {
-                conn.createStatement().execute(sql);
-            }
 
             // Insert facts
             System.out.println("Inserting facts...");

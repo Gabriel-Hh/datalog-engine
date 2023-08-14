@@ -48,6 +48,16 @@ public class DatalogParser {
 
         }
     }
+    // Checks that facts do not contain Variables, else throws error.
+    static boolean factSafetyCheck(Fact fact){
+        for(Term term : fact.predicate.terms){
+            if (term instanceof Variable){
+                throw new Error("PARSER ERROR: Fact Safety: Facts CANNOT CONTAIN VARIABLES in the terms of its predicate.");
+            }
+        }
+        return true;
+    }
+
 
     // Checks that all rule head variable are also present in body
     static boolean checkSafety(Rule rule) {
@@ -60,7 +70,11 @@ public class DatalogParser {
                 if (term instanceof Variable) {
                     bodyVariables.add(term.name);
                 }
+                else {
+                    throw new Error("PARSER ERROR: This implementation DOES NOT SUPPORT CONSTANTS in the body of a rule.");
+                }
             }
+
         }
         for (int i = 0; i < rule.head.predicate.terms.size(); i++) {
             
@@ -68,7 +82,10 @@ public class DatalogParser {
             if (term instanceof Variable && !bodyVariables.contains(term.name)) {
                 System.out.println("Unsafe: Variable " + term.name + " in Rule " + rule.head.predicate.name);
                 // TODO Make unsafe rule throw fatal error to stop parsing and end engine
-                return false; // Variable in head not found in body
+                throw new Error("PARSER ERROR: UnSafe Rule : Head Variable must occur in body of rule."); // Variable in head not found in body
+            }
+            else if (term instanceof Constant){
+                throw new Error("PARSER ERROR: This implementation DOES NOT SUPPORT CONSTANTS in the head of a rule.");
             }
         }
     return true;
@@ -171,6 +188,7 @@ Rule Rule() :
         // The 'source' of a head variable is used in SQL SELECT as (predicate.alias).ai 
         //  Where 'alias' is the distinct table name in which the variable first appears
         // in the body of the rule (e.g table AS table1) and ai is the columnName (a + index) in the SQL table.
+        
         setVariableSource(head, body); 
 
         rule.body.joinConditions = identifyJoinConditions(rule.body.predicates);
@@ -181,11 +199,16 @@ Rule Rule() :
 Fact Fact() :
 {
     Predicate predicate;
+    Fact fact;
 }
 {
     predicate = Predicate(null) // No rule for a fact
     <PERIOD>
-    { return new Fact(predicate); }
+    {
+        fact = new Fact(predicate);
+        factSafetyCheck(fact);
+        return fact; 
+    }
 }
 
 Head Head() :

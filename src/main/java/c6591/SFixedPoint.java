@@ -29,88 +29,115 @@ public class SFixedPoint {
             if(App.verbose){
                 System.out.println("Iteration: " + iteration);
             }
+            //DEBUG
+            System.out.println("Iteration: " + iteration);
+
             int count = 1;
             for(String ruleHead : rules.keySet()){
                 for(String rule : rules.get(ruleHead)){
                     //adding facts to the rules to the tables semi-naively
                     // ddp is made here with all the new rules
                     try{
+                        //DEBUG
+                        System.out.println("Exec Rule: " + rule);
                         conn.createStatement().execute(rule);
                     }catch(SQLException e){
-                        if(e.getErrorCode() == 23505)
-                            continue;
-                        else
-                            throw e;
+                        //if(e.getErrorCode() == 23505)
+                            System.out.println("Error: " + e.getMessage());
+                        //else
+                            //throw e;
                     }
                 }
             }
             
+            
             isChanged = false;
             for(String table : tables.keySet()){
 
-                int colcount=0;
-                try{
-                    ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + table +"'" );
-                if (rs.next()) {
-                    colcount = rs.getInt(1);
-                    System.out.println("colcount: " + colcount);
-                }
-                }catch(SQLException e){
-                    System.out.println("Cant et column coutn for" + table + e.getMessage()); 
-                }
-                String dtable = "d"+table;
+                // int colcount=0;
+                // try{
+                //     ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + table +"'" );
+                // if (rs.next()) {
+                //     colcount = rs.getInt(1);
+                //     System.out.println("colcount: " + colcount);
+                // }
+                // }catch(SQLException e){
+                //     System.out.println("Cant et column count for" + table + e.getMessage()); 
+                // }
+                // String dtable = "d"+table;
 
-                //Make NOT In string
-                String whereNotExists = "(SELECT 1 From " + table + " WHERE ";
-                colcount =1;
-                for(int i=1; i<=colcount; i++){
-                    whereNotExists += dtable +".a"+ i + " = " + table + ".a" + i;
-                    if(i != colcount)
-                        whereNotExists += " AND ";
-                    }
-
-
+                // //Make NOT In string
+                // String whereNotExists = "(SELECT 1 From " + table + " WHERE ";
+                // colcount =1;
+                // for(int i=1; i<=colcount; i++){
+                //     whereNotExists += dtable +".a"+ i + " = " + table + ".a" + i;
+                //     if(i != colcount)
+                //         whereNotExists += " AND ";
+                //     }
 
 
-                
-                String dtable2table = "INSERT INTO " + table + " SELECT * FROM " + dtable + " WHERE NOT EXISTS " + whereNotExists + ")";
+                    
+
+                //TODO: get rid of WHERE NOT EXIST, and use ON DUPLICATE DO NONTHING (DONE)   
+                String dtable2table = "INSERT INTO " + table + " SELECT * FROM " + "d"+ table + " ON CONFLICT ON CONSTRAINT " + table + "_pkey DO NOTHING";
                 conn.createStatement().execute(dtable2table);
-                String recordDelete = "TRUNCATE TABLE " + table;
+        
+                //
+                String recordDelete = "TRUNCATE TABLE " + "d" + table;
                 conn.createStatement().execute(recordDelete);
+                ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM " + "d" + table );
+                if(rs.next()){
+                    count = rs.getInt(1);
+                    System.out.println("The Table: d" + table);
+                    System.out.println("The count of number of rows (after truncate operation): " + count);
+                }
             }
 
             for(String table : tables.keySet()){
                 int colcount=0;
                 try{
-                    ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + table +"'" );
+                    ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT (*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + table +"'" );
                 if (rs.next()) {
                     colcount = rs.getInt(1);
                 }
                 }catch(SQLException e){
                     System.out.println("Cant get column count for " + table + e.getMessage()); 
                 }
-                String ddtable = "dd"+table;
-                String dtable = ddtable.substring(1);
+                //String ddtable = "dd"+table;
+                //String dtable = ddtable.substring(1);
 
                 //Make NOT In string
-                String whereNotExists = "(SELECT 1 From " + dtable + " WHERE ";
+                //String whereNotExists = "(SELECT 1 From " + dtable + " WHERE ";
                 //BYPASS
-                colcount =1;
+                // colcount =1;
                 //BYPASS
-                for(int i=1; i<=colcount; i++){
-                    whereNotExists += ddtable +".a"+ i + " = " + dtable + ".a" + i;
-                    if(i != colcount)
-                        whereNotExists += " AND ";}
+                // for(int i=1; i<=colcount; i++){
+                //     whereNotExists += ddtable +".a"+ i + " = " + dtable + ".a" + i;
+                //     if(i != colcount)
+                //         whereNotExists += " AND ";}
 
-
-                String ddtable2dtable = "INSERT INTO " + dtable + " SELECT * FROM " + ddtable + " WHERE NOT EXISTS " + whereNotExists + ")";   
+                //TODO: we need to add the ONCONFILCT as well as change the where not exist to accept(or postgres set difference)
+                //putting in dtable from ddtable not in table.        
+                String ddtable2dtable = "INSERT INTO " + "d" + table + " SELECT * FROM " + "dd" + table + " EXCEPT SELECT * FROM " + table; 
+                
+                
+                //DEBUG
+                System.out.println("dtable: " + ddtable2dtable);
+                
                 conn.createStatement().execute(ddtable2dtable);
-                ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM " + dtable );
+                ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM " + "d" + table );
                 if(rs.next()){
                     count = rs.getInt(1);
+                    System.out.println("The Table: d" + table);
+                    System.out.println("The count of number of rows: " + count);
                 }
 
+                //Emptying ddtable for next iteration
+                String recordDelete = "TRUNCATE TABLE " + "dd" + table;
+                conn.createStatement().execute(recordDelete);
+
                 if(count != 0){
+                    System.out.println("Count of rows in dtable: " + count);
                     isChanged = true;
                 }
 
