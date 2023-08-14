@@ -29,8 +29,6 @@ public class SFixedPoint {
             if(App.verbose){
                 System.out.println("Iteration: " + iteration);
             }
-            //DEBUG
-            System.out.println("Iteration: " + iteration);
 
             int count = 1;
             for(String ruleHead : rules.keySet()){
@@ -38,8 +36,6 @@ public class SFixedPoint {
                     //adding facts to the rules to the tables semi-naively
                     // ddp is made here with all the new rules
                     try{
-                        //DEBUG
-                        System.out.println("Exec Rule: " + rule);
                         conn.createStatement().execute(rule);
                     }catch(SQLException e){
                         //if(e.getErrorCode() == 23505)
@@ -88,8 +84,6 @@ public class SFixedPoint {
                 ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM " + "d" + table );
                 if(rs.next()){
                     count = rs.getInt(1);
-                    System.out.println("The Table: d" + table);
-                    System.out.println("The count of number of rows (after truncate operation): " + count);
                 }
             }
 
@@ -121,15 +115,10 @@ public class SFixedPoint {
                 String ddtable2dtable = "INSERT INTO " + "d" + table + " SELECT * FROM " + "dd" + table + " EXCEPT SELECT * FROM " + table; 
                 
                 
-                //DEBUG
-                System.out.println("dtable: " + ddtable2dtable);
-                
                 conn.createStatement().execute(ddtable2dtable);
                 ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM " + "d" + table );
                 if(rs.next()){
                     count = rs.getInt(1);
-                    System.out.println("The Table: d" + table);
-                    System.out.println("The count of number of rows: " + count);
                 }
 
                 //Emptying ddtable for next iteration
@@ -137,7 +126,6 @@ public class SFixedPoint {
                 conn.createStatement().execute(recordDelete);
 
                 if(count != 0){
-                    System.out.println("Count of rows in dtable: " + count);
                     isChanged = true;
                 }
 

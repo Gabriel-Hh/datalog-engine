@@ -35,8 +35,9 @@ public class InitDatabase {
         System.out.println("Creating tables...");
         for(List<String> threeTables : tables.values()) {
             for(String sql : threeTables) {
-                //DEBUG
-                System.out.println(sql);
+                if(App.verbose){
+                    System.out.println(sql);
+                }
                 conn.createStatement().execute(sql);
             }        
         }
