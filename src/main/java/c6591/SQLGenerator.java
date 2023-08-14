@@ -102,15 +102,11 @@ public class SQLGenerator {
                 }
             })
             .collect(Collectors.joining(" AND "));
-    
-        // Generate ON DUPLICATE KEY UPDATE section THIS FIXES THE INSERT DUPLICATE PROBLEM
-        String onDuplicateKeyUpdate = termSelectors.stream()
-            .map(termSelector -> termSelector.split("\\.")[1] + "=VALUES(" + termSelector.split("\\.")[1] + ")")
-            .collect(Collectors.joining(", "));
+
     
         return "INSERT INTO " + head + " SELECT " + select + " FROM " + from + 
                (where.isEmpty() ? "" : " WHERE " + where) + 
-               " ON DUPLICATE KEY UPDATE " + onDuplicateKeyUpdate;
+               " ON CONFLICT ON CONSTRAINT " + head + "_pkey DO NOTHING";
     }
     
 

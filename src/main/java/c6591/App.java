@@ -3,10 +3,13 @@ package c6591;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.sql.Connection;
+import java.sql.Statement;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import parser.DatalogParser;
 import parser.ParseException;
 import c6591.ASTClasses.Program;
@@ -23,11 +26,14 @@ public class App {
         Triple<HashMap<String,String>,HashMap<String,List<String>>,HashMap<String,List<String>>> sqlStatements;
         
         //DATABASE CONNECTION
+        String dbUrl = "jdbc:postgresql://localhost:5432/test";
+        String dbUser = "myuser";
+        String dbPassword = "password";
         try{
-            conn = DriverManager.getConnection("jdbc:h2:mem:test;MODE=MySQL");
-        } catch (Exception e) {
-            System.out.println("Error: InitDatabase.connect() " + e.getMessage());}
-
+            conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+        } catch (SQLException e) { System.out.println("Error: Connection to database failed."+ e.getMessage());}
+        
+        dropAllTables();
 
         //ARGS (INPUT FILE + VERBOSE) 
         // Both arguments are optional. If no arguments are given, the default test file is used with verbose = false.
@@ -121,6 +127,8 @@ public class App {
         InitDatabase.writeFacts();
         long writeEnd = System.currentTimeMillis();
         
+        
+        //dropAllTables();
         try{
             conn.close();
         } catch (Exception e) {
@@ -135,5 +143,27 @@ public class App {
         System.out.println("Database Initialization: " + (initEnd - initStart) + "ms");
         System.out.println("Fixed Point: " + (fixedPointEnd - fixedPointStart) + "ms");
         System.out.println("Write to File: " + (writeEnd - writeStart) + "ms");
+        
     }
+    
+    
+
+    public static void dropAllTables() {
+    try (Statement stmt = conn.createStatement()) {
+        // Fetch all table names
+        ResultSet rs = stmt.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname = 'public';");
+        List<String> tableNames = new ArrayList<>();
+        while (rs.next()) {
+            tableNames.add(rs.getString(1));
+        }
+        rs.close();
+
+        for (String tableName : tableNames) {
+            stmt.executeUpdate("DROP TABLE IF EXISTS " + tableName + " CASCADE;");
+        }
+    } catch (SQLException e) {
+        System.out.println("Error dropping tables: " + e.getMessage());
+    }
+}
+
 }
