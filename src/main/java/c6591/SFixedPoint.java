@@ -132,6 +132,10 @@ public class SFixedPoint {
                     System.out.println("The count of number of rows: " + count);
                 }
 
+                //Emptying ddtable for next iteration
+                String recordDelete = "TRUNCATE TABLE " + "dd" + table;
+                conn.createStatement().execute(recordDelete);
+
                 if(count != 0){
                     System.out.println("Count of rows in dtable: " + count);
                     isChanged = true;
