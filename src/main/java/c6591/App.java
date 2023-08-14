@@ -30,11 +30,9 @@ public class App {
         String dbUser = "myuser";
         String dbPassword = "password";
         try{
-            
             conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-            // conn = DriverManager.getConnection("jdbc:h2:mem:test:MODE=MariaDB;DATABASE_TO_LOWER=TRUE");
-            //conn = DriverManager.getConnection("jdbc:h2:mem:test:");
         } catch (SQLException e) { System.out.println("Error: Connection to database failed."+ e.getMessage());}
+        
         dropAllTables();
 
         //ARGS (INPUT FILE + VERBOSE) 
@@ -147,21 +145,9 @@ public class App {
         System.out.println("Write to File: " + (writeEnd - writeStart) + "ms");
         
     }
+    
+    
 
-    
-    
-    // public static void dropAllTables() {
-    //     try (Statement stmt = conn.createStatement()) {
-    //         // Fetch all table names
-    //         ResultSet rs = stmt.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname = 'public';");
-    //         while (rs.next()) {
-    //             String tableName = rs.getString(1);
-    //             stmt.executeUpdate("DROP TABLE IF EXISTS " + tableName + " CASCADE;");
-    //         }
-    //     } catch (SQLException e) {
-    //         System.out.println("Error dropping tables: " + e.getMessage());
-    //     }
-    // }
     public static void dropAllTables() {
     try (Statement stmt = conn.createStatement()) {
         // Fetch all table names
